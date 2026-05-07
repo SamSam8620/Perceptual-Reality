@@ -123,7 +123,34 @@ User journey storyboard: [`/storyboards/detmerode_user_journey.md`](storyboards/
 
 ## Status
 > Pilot district (Detmerode) — route analysis + user journey storyboard complete — 2026-04-30
-> Next: Installation typology design — what the physical objects look like and how they behave
+> Installation typology design complete (6 types, 39 units) — 2026-05-06
+> Interface prototype complete — system dashboard + typologies browser — 2026-05-07
+> Next: Remaining districts (Westhagen, Laagberg, Klieversberg, Nordsteimke)
+
+---
+
+## Interface
+Two interactive HTML prototypes are available in `/interface`:
+
+### [`detmerode.html`](interface/detmerode.html) — System Dashboard
+Full corridor dashboard for the Detmerode → Porschestrasse pilot route. Three views:
+- **System** — 5-segment route panel with installation detail, ambient visualisations, live corridor data (walkers, cyclists, active nodes, hourly flow), and a walkthrough simulation (Leila's route)
+- **Contribute AR Data** — GDPR-compliant 5-step wizard for anonymous citizen experience contributions: consent, walk details, installation ratings, feedback, and confirmation. Backed by a 50-entry seed dataset. Community stats panel.
+- **Insights** — Segment performance scores (helpfulness/safety), top feedback themes, AR engagement metrics, adaptation log (4 applied), and pending adaptations (3 queued)
+
+### [`typologies.html`](interface/typologies.html) — Installation Typologies Browser
+Reference view for all 6 installation typologies across the Detmerode corridor:
+
+| Type | Name | Count | Location |
+|---|---|---|---|
+| A | Wayfinding Post | 11 | Estate · transition zones · city approach |
+| B | Threshold Marker | 4 pylons (2 pairs) | Zusammenrücken Bridge |
+| C | Path Pulse | 18 + 1 master | Rothehofer Forst |
+| D | Narrative Post | 1 | Forest midpoint |
+| E | Cultural Panel | 4 | Estate · forest · Westhagen |
+| F | Arrival Counter | 1 | Porschestrasse entry |
+
+Each typology includes: annotated SVG elevation schematic, response behaviour timeline, technical specifications, material palette, and route placement map.
 
 ---
 
@@ -133,10 +160,13 @@ User journey storyboard: [`/storyboards/detmerode_user_journey.md`](storyboards/
     detmerode_analysis.md          ✓ complete
     [district].md                  — pending for remaining districts
 /design
-    — installation typologies      pending
+    installation_typologies.md     ✓ complete (6 types, 39 units, 2026-05-06)
 /storyboards
     detmerode_user_journey.md      ✓ complete
     [district]_user_journey.md     — pending for remaining districts
+/interface
+    detmerode.html                 ✓ complete — system dashboard + AR contribute + insights
+    typologies.html                ✓ complete — all 6 installation typologies
 /technical
     — sensor specs, system diagrams  pending
 ```
