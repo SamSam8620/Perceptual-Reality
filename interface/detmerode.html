@@ -1,0 +1,918 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Active Corridors — Detmerode Pilot</title>
+  <style>
+    :root {
+      --bg:#07070f; --surface:#0e0e1a; --border:#1c1c2e;
+      --amber:#f5a623; --amber-dim:#6a4510; --amber-glow:rgba(245,166,35,.18);
+      --green:#2d5a3d; --green-bright:#4adb6e;
+      --blue-light:#5a9abf;
+      --text:#b0b0cc; --text-dim:#484868; --text-bright:#e4e4f0;
+    }
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{background:var(--bg);color:var(--text);font-family:'SF Mono','Fira Code','Consolas',monospace;font-size:12px;height:100vh;overflow:hidden;display:grid;grid-template-rows:50px 1fr 72px}
+
+    /* HEADER */
+    header{background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:stretch;justify-content:space-between}
+    .h-brand{display:flex;align-items:center;gap:16px;padding:0 20px;flex-shrink:0}
+    .h-eyebrow{font-size:9px;letter-spacing:.18em;color:var(--text-dim);text-transform:uppercase}
+    .h-route{font-size:13px;letter-spacing:.06em;color:var(--text-bright);text-transform:uppercase}
+    .h-div{width:1px;background:var(--border);align-self:stretch}
+    .h-meta{font-size:10px;color:var(--text-dim);display:flex;align-items:center;padding:0 16px;flex-shrink:0}
+    .tab-nav{display:flex;align-items:stretch;flex:1}
+    .tab{padding:0 18px;background:transparent;border:none;border-bottom:2px solid transparent;cursor:pointer;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--text-dim);font-family:inherit;transition:all .2s;white-space:nowrap}
+    .tab:hover{color:var(--text)}
+    .tab.active{color:var(--amber);border-bottom-color:var(--amber)}
+    .h-right{display:flex;align-items:center;gap:8px;padding:0 16px;flex-shrink:0}
+    .status-dot{width:6px;height:6px;border-radius:50%;background:var(--green-bright);animation:blink 2.4s ease-in-out infinite}
+    @keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+    .status-text{font-size:10px;letter-spacing:.1em;color:var(--green-bright);text-transform:uppercase}
+    #clock{font-size:10px;color:var(--text-dim)}
+
+    /* VIEW CONTAINER */
+    .vc{overflow:hidden;position:relative}
+    .view{display:none;height:100%}
+    .view.active{display:grid}
+    #vs{grid-template-columns:300px 1fr 260px}
+    #vc2{grid-template-columns:300px 1fr 260px}
+    #vi{display:flex!important;flex-direction:column;overflow-y:auto;padding:20px 24px;gap:18px}
+
+    /* SHARED */
+    .side-panel{background:var(--surface);overflow-y:auto;padding:18px 14px}
+    .side-l{border-right:1px solid var(--border)}
+    .side-r{border-left:1px solid var(--border)}
+    .scroll-panel{overflow-y:auto;padding:24px 26px 70px;display:flex;flex-direction:column;gap:20px;position:relative}
+    .ds-label{font-size:9px;letter-spacing:.15em;text-transform:uppercase;color:var(--text-dim);margin-bottom:10px}
+    .sec-label{font-size:9px;letter-spacing:.15em;text-transform:uppercase;color:var(--text-dim)}
+    .metric-row{display:flex;justify-content:space-between;align-items:baseline;padding:5px 0;border-bottom:1px solid rgba(255,255,255,.04)}
+    .mr-label{font-size:10px;color:var(--text-dim)}
+    .mr-val{font-size:16px;font-family:'Helvetica Neue',Arial,sans-serif;font-weight:200;color:var(--text-bright);letter-spacing:-.02em}
+    .mr-val.a{color:var(--amber)}
+    ::-webkit-scrollbar{width:3px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+
+    /* SYSTEM – route panel */
+    .route-panel{background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow-y:auto;padding:18px 12px;gap:0}
+    .endpoint{background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:4px;padding:9px 11px}
+    .ep-name{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--text-bright)}
+    .ep-sub{font-size:9px;color:var(--text-dim);margin-top:2px}
+    .seg-list{flex:1}
+    .seg-item{display:flex;align-items:stretch;cursor:pointer}
+    .seg-item:hover .seg-card{background:rgba(255,255,255,.03);border-color:rgba(255,255,255,.12)}
+    .seg-item.active .seg-card{background:var(--amber-glow);border-color:var(--amber)}
+    .seg-axis{width:26px;flex-shrink:0;display:flex;flex-direction:column;align-items:center}
+    .ax-t,.ax-b{flex:1;width:1px;background:var(--border)}
+    .seg-node{width:8px;height:8px;border-radius:50%;border:1.5px solid var(--amber-dim);background:var(--bg);position:relative;transition:all .3s;z-index:1}
+    .seg-item.active .seg-node{border-color:var(--amber);background:var(--amber);box-shadow:0 0 10px var(--amber)}
+    .seg-item.active .seg-node::after{content:'';position:absolute;inset:-4px;border-radius:50%;border:1px solid var(--amber);animation:ripple 2s ease-out infinite}
+    @keyframes ripple{0%{transform:scale(1);opacity:.8}100%{transform:scale(2.6);opacity:0}}
+    .seg-card{flex:1;margin:3px 0 3px 7px;padding:8px 10px;border-radius:4px;border:1px solid var(--border);transition:all .2s}
+    .sc-num{font-size:9px;letter-spacing:.1em;color:var(--text-dim);text-transform:uppercase;margin-bottom:2px}
+    .sc-name{font-size:11px;color:var(--text-bright);margin-bottom:4px}
+    .sc-tags{display:flex;gap:4px;flex-wrap:wrap}
+    .tag{font-size:9px;color:var(--text-dim);background:rgba(255,255,255,.04);border-radius:2px;padding:1px 5px}
+    .tag.on{color:var(--amber);background:rgba(245,166,35,.08)}
+
+    /* SYSTEM – detail */
+    .dp-header{border-bottom:1px solid var(--border);padding-bottom:13px}
+    .dp-ey{font-size:9px;letter-spacing:.15em;color:var(--text-dim);text-transform:uppercase;margin-bottom:4px}
+    .dp-title{font-size:19px;font-family:'Helvetica Neue',Arial,sans-serif;font-weight:300;color:var(--text-bright);margin-bottom:7px}
+    .dp-desc{font-size:12px;font-family:'Helvetica Neue',Arial,sans-serif;color:var(--text);line-height:1.65}
+    .ambient-vis{width:100%;height:100px;border-radius:4px;border:1px solid var(--border);background:var(--bg);position:relative;overflow:hidden}
+    .av-path{position:absolute;bottom:12px;left:8%;right:8%;height:1px;background:linear-gradient(90deg,transparent,rgba(245,166,35,.5),rgba(245,166,35,.9),rgba(245,166,35,.5),transparent)}
+    .av-pool{position:absolute;bottom:0;left:50%;transform:translateX(-50%);width:90px;height:52px;background:radial-gradient(ellipse,rgba(245,166,35,.28) 0%,transparent 70%);animation:pool 3.2s ease-in-out infinite}
+    @keyframes pool{0%,100%{opacity:.6;transform:translateX(-50%) scaleX(1)}50%{opacity:1;transform:translateX(-50%) scaleX(1.2)}}
+    .av-fl{position:absolute;top:0;bottom:0;left:0;width:28%;background:linear-gradient(90deg,rgba(8,22,12,.95),rgba(8,22,12,.2))}
+    .av-fr{position:absolute;top:0;bottom:0;right:0;width:28%;background:linear-gradient(270deg,rgba(8,22,12,.95),rgba(8,22,12,.2))}
+    .av-fm{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:rgba(74,140,98,.6)}
+    .av-bd{position:absolute;bottom:18px;left:0;right:0;height:16px;background:rgba(30,40,60,.8);border-top:1px solid rgba(90,154,191,.3)}
+    .av-bl{position:absolute;bottom:18px;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,rgba(90,154,191,.8),transparent);animation:bl 2s ease-in-out infinite}
+    @keyframes bl{0%,100%{opacity:.5}50%{opacity:1}}
+    .av-blab{position:absolute;top:50%;left:50%;transform:translate(-50%,-80%);font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:rgba(90,154,191,.5)}
+    .install-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+    .ic{background:rgba(255,255,255,.025);border:1px solid var(--border);border-radius:4px;padding:9px}
+    .ic-lab{font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--text-dim);margin-bottom:4px}
+    .ic-val{font-size:10px;color:var(--text);line-height:1.5;margin-bottom:5px}
+    .ic-ft{display:flex;align-items:center;gap:5px}
+    .ic-dot{width:5px;height:5px;border-radius:50%;flex-shrink:0}
+    .ic-dot.on{background:var(--amber);box-shadow:0 0 5px var(--amber)}
+    .ic-dot.idle{background:var(--text-dim)}
+    .ic-sen{font-size:9px;color:var(--text-dim)}
+    .cb{background:rgba(245,166,35,.04);border:1px solid rgba(245,166,35,.18);border-radius:4px;padding:14px}
+    .cb-q{font-family:'Helvetica Neue',Arial,sans-serif;font-size:13px;font-style:italic;font-weight:300;color:var(--amber);line-height:1.75}
+    .cb-n{font-family:'Helvetica Neue',Arial,sans-serif;font-size:30px;font-weight:200;letter-spacing:-.03em;color:var(--text-bright);line-height:1}
+    .cb-nl{font-size:10px;color:var(--text-dim);letter-spacing:.08em;text-transform:uppercase;margin-top:3px}
+    .cb-ns{font-size:12px;color:var(--amber);font-family:'Helvetica Neue',Arial,sans-serif;font-weight:300;margin-top:9px}
+    .user-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+    .uc{background:rgba(255,255,255,.02);border:1px solid var(--border);border-radius:4px;padding:10px}
+    .uc-name{font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--amber);margin-bottom:4px}
+    .uc-st{font-size:11px;font-family:'Helvetica Neue',Arial,sans-serif;color:var(--text);line-height:1.55}
+    .journey-btn{position:sticky;bottom:0;width:100%;background:var(--amber);color:#06060e;border:none;border-radius:3px;padding:10px;font-size:10px;letter-spacing:.12em;text-transform:uppercase;cursor:pointer;font-family:inherit;transition:all .2s}
+    .journey-btn:hover{background:#ffc44a}
+    .journey-btn.running{background:rgba(45,90,61,.8);color:var(--green-bright);border:1px solid var(--green)}
+    .bar-list{display:flex;flex-direction:column;gap:3px}
+    .br-row{display:flex;align-items:center;gap:5px}
+    .br-lab{font-size:9px;color:var(--text-dim);width:24px;flex-shrink:0}
+    .br-tr{flex:1;height:3px;background:rgba(255,255,255,.06);border-radius:2px;overflow:hidden}
+    .br-fi{height:100%;background:var(--amber);border-radius:2px;transition:width 1s ease}
+    .br-val{font-size:9px;color:var(--text-dim);width:28px;text-align:right}
+    .nl-row{display:flex;align-items:center;gap:6px;padding:5px 7px;border-radius:3px;background:rgba(255,255,255,.02)}
+    .nl-dot{width:5px;height:5px;border-radius:50%;flex-shrink:0}
+    .nl-dot.on{background:var(--amber);box-shadow:0 0 5px var(--amber)}
+    .nl-dot.idle{background:var(--text-dim)}
+    .nl-name{font-size:10px;color:var(--text);flex:1}
+    .nl-sen{font-size:9px;color:var(--text-dim)}
+
+    /* CONTRIBUTE – wizard */
+    .wiz-prog{display:flex;gap:3px;margin-bottom:18px}
+    .wiz-seg{flex:1;height:3px;border-radius:2px;background:var(--border);transition:background .3s}
+    .wiz-seg.done{background:var(--amber)}
+    .wiz-seg.cur{background:rgba(245,166,35,.4)}
+    .wiz-eyebrow{font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--text-dim);margin-bottom:10px}
+    .wiz-title{font-size:15px;font-family:'Helvetica Neue',Arial,sans-serif;font-weight:300;color:var(--text-bright);margin-bottom:5px}
+    .wiz-sub{font-size:11px;font-family:'Helvetica Neue',Arial,sans-serif;color:var(--text-dim);line-height:1.6;margin-bottom:14px}
+    .consent-list{list-style:none;display:flex;flex-direction:column;gap:7px;margin-bottom:14px}
+    .consent-list li{display:flex;gap:7px;font-size:11px;font-family:'Helvetica Neue',Arial,sans-serif;color:var(--text);line-height:1.5}
+    .consent-list li::before{content:'✓';color:var(--green-bright);font-size:10px;flex-shrink:0;margin-top:1px}
+    .consent-list li.no::before{content:'✗';color:#e05252}
+    .cc-wrap{display:flex;align-items:flex-start;gap:8px;padding:9px;border:1px solid var(--border);border-radius:4px;background:rgba(255,255,255,.02);cursor:pointer;margin-bottom:12px;transition:border-color .2s}
+    .cc-wrap:hover{border-color:rgba(255,255,255,.2)}
+    .cc-wrap.on{border-color:var(--green-bright);background:rgba(74,219,110,.05)}
+    .cc-box{width:13px;height:13px;border:1.5px solid var(--text-dim);border-radius:2px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:8px;transition:all .2s}
+    .cc-wrap.on .cc-box{border-color:var(--green-bright);background:var(--green-bright);color:#06060e}
+    .cc-text{font-size:10px;color:var(--text);line-height:1.5;font-family:'Helvetica Neue',Arial,sans-serif}
+    .gdpr-note{font-size:9px;color:var(--text-dim);line-height:1.6;padding-top:10px;border-top:1px solid var(--border);margin-bottom:14px}
+    .form-group{margin-bottom:14px}
+    .form-lab{font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--text-dim);margin-bottom:7px;display:block}
+    .radio-g{display:flex;flex-direction:column;gap:3px}
+    .rb{display:flex;align-items:center;gap:7px;padding:6px 9px;border:1px solid var(--border);border-radius:3px;cursor:pointer;transition:all .15s;font-size:10px;color:var(--text);font-family:'Helvetica Neue',Arial,sans-serif}
+    .rb:hover{border-color:rgba(255,255,255,.2);background:rgba(255,255,255,.02)}
+    .rb.sel{border-color:var(--amber);background:var(--amber-glow);color:var(--text-bright)}
+    .rb-dot{width:7px;height:7px;border-radius:50%;border:1.5px solid var(--text-dim);flex-shrink:0;transition:all .15s}
+    .rb.sel .rb-dot{border-color:var(--amber);background:var(--amber)}
+    .seg-pick{display:flex;flex-direction:column;gap:3px}
+    .sp{display:flex;align-items:center;gap:7px;padding:6px 9px;border:1px solid var(--border);border-radius:3px;cursor:pointer;transition:all .15s}
+    .sp:hover{border-color:rgba(255,255,255,.2)}
+    .sp.sel{border-color:var(--amber);background:var(--amber-glow)}
+    .sp-dot{width:6px;height:6px;border-radius:50%;border:1.5px solid var(--text-dim);transition:all .15s}
+    .sp.sel .sp-dot{border-color:var(--amber);background:var(--amber)}
+    .sp-name{font-size:10px;color:var(--text);font-family:'Helvetica Neue',Arial,sans-serif;flex:1}
+    .sp-d{font-size:9px;color:var(--text-dim)}
+    .stars{display:flex;gap:5px}
+    .star{width:26px;height:26px;background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:3px;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;transition:all .15s}
+    .star:hover,.star.on{background:rgba(245,166,35,.2);border-color:var(--amber)}
+    .check-g{display:flex;flex-direction:column;gap:3px}
+    .ci{display:flex;align-items:center;gap:7px;padding:6px 9px;border:1px solid var(--border);border-radius:3px;cursor:pointer;transition:all .15s;font-size:10px;color:var(--text);font-family:'Helvetica Neue',Arial,sans-serif}
+    .ci:hover{border-color:rgba(255,255,255,.2)}
+    .ci.on{border-color:rgba(245,166,35,.5);background:rgba(245,166,35,.05)}
+    .ci-box{width:12px;height:12px;border:1.5px solid var(--text-dim);border-radius:2px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:8px;transition:all .15s}
+    .ci.on .ci-box{border-color:var(--amber);background:var(--amber);color:#06060e}
+    textarea.wiz-ta{width:100%;background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:3px;padding:8px;font-size:11px;font-family:'Helvetica Neue',Arial,sans-serif;color:var(--text);resize:none;outline:none;transition:border-color .2s;margin-top:4px}
+    textarea.wiz-ta:focus{border-color:rgba(255,255,255,.2)}
+    .char-ct{font-size:9px;color:var(--text-dim);text-align:right;margin-top:2px}
+    .wiz-nav{display:flex;gap:7px;margin-top:14px}
+    .wiz-btn{flex:1;padding:9px;font-size:10px;letter-spacing:.1em;text-transform:uppercase;font-family:inherit;border-radius:3px;border:1px solid var(--border);cursor:pointer;transition:all .2s}
+    .wbk{background:transparent;color:var(--text-dim)}.wbk:hover{border-color:rgba(255,255,255,.2);color:var(--text)}
+    .wnx{background:var(--amber);color:#06060e;border-color:var(--amber)}.wnx:hover{background:#ffc44a}
+    .wnx:disabled{background:var(--border);color:var(--text-dim);border-color:var(--border);cursor:not-allowed}
+    .wsb{background:var(--green-bright);color:#06060e;border-color:var(--green-bright)}.wsb:hover{background:#6aefaa}
+    .ty-box{background:rgba(74,219,110,.05);border:1px solid rgba(74,219,110,.2);border-radius:4px;padding:14px;margin-bottom:14px}
+    .ty-title{font-size:13px;color:var(--green-bright);font-family:'Helvetica Neue',Arial,sans-serif;font-weight:300;margin-bottom:5px}
+    .ty-text{font-size:11px;color:var(--text);font-family:'Helvetica Neue',Arial,sans-serif;line-height:1.6}
+    .ty-sum{margin-top:10px;padding-top:10px;border-top:1px solid rgba(74,219,110,.15);font-size:10px;color:var(--text-dim);line-height:1.7}
+
+    /* CONTRIBUTE – center */
+    .ar-phone-wrap{display:flex;flex-direction:column;align-items:center;gap:12px}
+    .ar-phone{width:140px;height:250px;border-radius:18px;border:2px solid rgba(255,255,255,.12);background:#040410;position:relative;overflow:hidden;box-shadow:0 0 30px rgba(90,154,191,.12)}
+    .ar-overlay{position:absolute;inset:0;background:linear-gradient(180deg,rgba(90,154,191,.05),rgba(90,154,191,.02))}
+    .ar-scan{position:absolute;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(90,154,191,.7),transparent);animation:arscan 3s linear infinite}
+    @keyframes arscan{0%{top:0}100%{top:100%}}
+    .ar-nm{position:absolute;width:36px;height:36px;border:1px solid rgba(245,166,35,.6);border-radius:50%;top:50%;left:50%;transform:translate(-50%,-65%)}
+    .ar-nm::before{content:'';position:absolute;inset:4px;border-radius:50%;border:1px solid rgba(245,166,35,.25)}
+    .ar-qr{position:absolute;top:12px;right:10px;width:20px;height:20px;border:1px solid rgba(255,255,255,.3);border-radius:2px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:2px;padding:3px}
+    .ar-qr-c{background:rgba(255,255,255,.6);border-radius:1px}
+    .ar-info{position:absolute;bottom:16px;left:8px;right:8px;background:rgba(0,0,0,.75);border:1px solid rgba(245,166,35,.3);border-radius:5px;padding:7px}
+    .ar-it{font-size:7px;color:var(--amber);letter-spacing:.1em;text-transform:uppercase}
+    .ar-ix{font-size:6px;color:var(--text);line-height:1.4;margin-top:2px;font-family:'Helvetica Neue',Arial,sans-serif}
+    .ar-lab{font-size:9px;color:var(--text-dim);text-align:center;letter-spacing:.08em}
+    .feed-list{display:flex;flex-direction:column;gap:5px}
+    .fi{display:flex;gap:9px;padding:9px;border:1px solid var(--border);border-radius:4px;background:rgba(255,255,255,.02);animation:feedin .35s ease}
+    @keyframes feedin{from{opacity:0;transform:translateY(-5px)}to{opacity:1;transform:translateY(0)}}
+    .fi-dot{width:6px;height:6px;border-radius:50%;background:var(--amber);flex-shrink:0;margin-top:3px}
+    .fi-body{flex:1}
+    .fi-top{display:flex;justify-content:space-between;margin-bottom:2px}
+    .fi-sn{font-size:10px;color:var(--text-bright)}
+    .fi-ts{font-size:9px;color:var(--text-dim)}
+    .fi-meta{font-size:9px;color:var(--text-dim);display:flex;gap:7px}
+    .fi-stars{color:var(--amber);font-size:9px}
+    .cs-row{display:flex;justify-content:space-between;align-items:baseline;padding:5px 0;border-bottom:1px solid rgba(255,255,255,.04)}
+    .cs-lab{font-size:10px;color:var(--text-dim)}
+    .cs-val{font-size:16px;font-family:'Helvetica Neue',Arial,sans-serif;font-weight:200;color:var(--text-bright)}
+    .cs-val.a{color:var(--amber)}
+
+    /* INSIGHTS */
+    .ins-seg-row{display:grid;grid-template-columns:repeat(5,1fr);gap:10px}
+    .isc{background:var(--surface);border:1px solid var(--border);border-radius:4px;padding:12px}
+    .isc-num{font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--text-dim);margin-bottom:3px}
+    .isc-name{font-size:11px;color:var(--text-bright);margin-bottom:9px;line-height:1.3}
+    .isc-row{display:flex;justify-content:space-between;margin-bottom:2px}
+    .isc-lab{font-size:9px;color:var(--text-dim)}
+    .isc-val{font-size:9px;color:var(--text-bright)}
+    .isc-bar{height:3px;background:var(--border);border-radius:2px;overflow:hidden;margin-bottom:5px}
+    .isc-bf{height:100%;border-radius:2px}
+    .bf-g{background:var(--green-bright)}.bf-m{background:var(--amber)}.bf-r{background:#e05252}
+    .isc-ct{font-size:9px;color:var(--text-dim);margin-top:5px}
+    .ins-bot{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+    .ins-p{background:var(--surface);border:1px solid var(--border);border-radius:4px;padding:14px;overflow-y:auto;max-height:340px}
+    .ins-pt{font-size:9px;letter-spacing:.15em;text-transform:uppercase;color:var(--text-dim);margin-bottom:12px}
+    .th-row{margin-bottom:7px}
+    .th-top{display:flex;justify-content:space-between;margin-bottom:2px}
+    .th-lab{font-size:10px;color:var(--text);font-family:'Helvetica Neue',Arial,sans-serif}
+    .th-ct{font-size:9px;color:var(--text-dim)}
+    .th-bar{height:3px;background:var(--border);border-radius:2px;overflow:hidden}
+    .th-bf{height:100%;background:var(--blue-light);border-radius:2px}
+    .ad{padding:8px;border:1px solid var(--border);border-radius:3px;background:rgba(255,255,255,.02);margin-bottom:6px}
+    .ad.pen{border-color:rgba(245,166,35,.3)}
+    .ad.don{border-color:rgba(74,219,110,.2)}
+    .ad-head{display:flex;gap:5px;align-items:center;margin-bottom:3px}
+    .ad-badge{font-size:8px;letter-spacing:.08em;text-transform:uppercase;padding:1px 4px;border-radius:2px}
+    .ab-p{background:rgba(245,166,35,.15);color:var(--amber)}
+    .ab-d{background:rgba(74,219,110,.1);color:var(--green-bright)}
+    .ad-seg{font-size:9px;color:var(--text-dim)}
+    .ad-text{font-size:10px;color:var(--text);font-family:'Helvetica Neue',Arial,sans-serif;line-height:1.5}
+    .ad-basis{font-size:9px;color:var(--text-dim);margin-top:2px}
+    .arm-row{display:flex;align-items:baseline;gap:6px;padding:5px 0;border-bottom:1px solid rgba(255,255,255,.04)}
+    .arm-lab{font-size:10px;color:var(--text-dim);flex:1}
+    .arm-val{font-size:14px;font-family:'Helvetica Neue',Arial,sans-serif;font-weight:200;color:var(--text-bright)}
+    .arm-u{font-size:9px;color:var(--text-dim)}
+    .conf-row{display:flex;align-items:center;gap:7px;padding:5px 0;border-bottom:1px solid rgba(255,255,255,.04)}
+    .conf-lab{font-size:10px;color:var(--text-dim);flex:1}
+    .conf-bar{width:60px;height:3px;background:var(--border);border-radius:2px;overflow:hidden}
+    .conf-bf{height:100%;background:var(--amber);border-radius:2px}
+    .conf-pct{font-size:9px;color:var(--text-dim);width:28px;text-align:right}
+
+    /* FOOTER */
+    footer{background:var(--surface);border-top:1px solid var(--border);display:grid;grid-template-columns:repeat(5,1fr)}
+    .f-stat{padding:9px 16px;border-right:1px solid var(--border);display:flex;flex-direction:column;gap:2px}
+    .f-stat:last-child{border-right:none}
+    .f-lab{font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--text-dim)}
+    .f-val{font-size:22px;font-family:'Helvetica Neue',Arial,sans-serif;font-weight:200;color:var(--text-bright);letter-spacing:-.03em;line-height:1}
+    .f-unit{font-size:9px;color:var(--text-dim)}
+
+    select.wiz-sel{width:100%;background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:3px;padding:7px 9px;font-size:10px;font-family:inherit;color:var(--text);outline:none;cursor:pointer;appearance:none}
+    select.wiz-sel:focus{border-color:rgba(255,255,255,.2)}
+    select.wiz-sel option{background:var(--surface)}
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="h-brand">
+    <div>
+      <div class="h-eyebrow">Active Corridors — Wolfsburg</div>
+      <div class="h-route">Detmerode → Porschestrasse</div>
+    </div>
+  </div>
+  <div class="h-div"></div>
+  <div class="h-meta">Pilot · 3.8 km · 5 segments · 12 nodes</div>
+  <div class="tab-nav">
+    <button class="tab active" onclick="switchTab('vs')">System</button>
+    <button class="tab" onclick="switchTab('vc2')">Contribute AR Data</button>
+    <button class="tab" onclick="switchTab('vi')">Insights</button>
+  </div>
+  <div class="h-div"></div>
+  <div class="h-right">
+    <div class="status-dot"></div>
+    <div class="status-text">Live</div>
+    <div class="h-div" style="height:20px"></div>
+    <a href="typologies.html" style="font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--text-dim);text-decoration:none;padding:0 4px;transition:color .2s" onmouseover="this.style.color='var(--amber)'" onmouseout="this.style.color='var(--text-dim)'">Typologies ↗</a>
+    <div class="h-div" style="height:20px"></div>
+    <div id="clock">--:--:--</div>
+  </div>
+</header>
+
+<div class="vc">
+
+  <!-- ── SYSTEM ── -->
+  <div class="view active" id="vs">
+    <div class="route-panel">
+      <div class="endpoint"><div class="ep-name">Detmerode</div><div class="ep-sub">Großsiedlung 1960–70 · Origin · 0 km</div></div>
+      <div class="seg-list" id="segList"></div>
+      <div class="endpoint"><div class="ep-name">Porschestrasse</div><div class="ep-sub">City Centre · Destination · 3.8 km</div></div>
+    </div>
+    <div class="scroll-panel" id="detailPanel"></div>
+    <div class="side-panel side-r" style="display:flex;flex-direction:column;gap:18px">
+      <div>
+        <div class="ds-label">Live Corridor Data</div>
+        <div class="metric-row"><span class="mr-label">Walkers today</span><span class="mr-val a" id="mWalkers">1,847</span></div>
+        <div class="metric-row"><span class="mr-label">Cyclists today</span><span class="mr-val" id="mCyclists">423</span></div>
+        <div class="metric-row"><span class="mr-label">Active nodes</span><span class="mr-val" id="mNodes">3</span></div>
+        <div class="metric-row"><span class="mr-label">Avg walk pace</span><span class="mr-val">4.8 km/h</span></div>
+      </div>
+      <div><div class="ds-label">Node Status</div><div id="nodeList"></div></div>
+      <div><div class="ds-label">Hourly Flow</div><div class="bar-list" id="barList"></div></div>
+      <div><div class="ds-label">Privacy</div><div style="font-size:10px;color:var(--text-dim);line-height:1.7">LiDAR / IR thermal only.<br>No cameras. No identity.<br>Vectors discarded at node.<br>Aggregate counters only.</div></div>
+    </div>
+  </div>
+
+  <!-- ── CONTRIBUTE ── -->
+  <div class="view" id="vc2">
+    <div class="side-panel side-l" style="display:flex;flex-direction:column">
+      <div id="wizardPane"></div>
+    </div>
+    <div class="scroll-panel" style="padding:24px 24px 40px;gap:22px">
+      <div>
+        <div class="sec-label" style="margin-bottom:14px">AR Companion App — Node View</div>
+        <div class="ar-phone-wrap">
+          <div class="ar-phone">
+            <div class="ar-overlay"></div>
+            <div class="ar-scan"></div>
+            <div class="ar-nm" id="arNm"></div>
+            <div class="ar-qr">
+              <div class="ar-qr-c"></div><div class="ar-qr-c" style="opacity:.3"></div><div class="ar-qr-c"></div>
+              <div class="ar-qr-c" style="opacity:.3"></div><div class="ar-qr-c"></div><div class="ar-qr-c" style="opacity:.3"></div>
+              <div class="ar-qr-c"></div><div class="ar-qr-c" style="opacity:.3"></div><div class="ar-qr-c"></div>
+            </div>
+            <div class="ar-info">
+              <div class="ar-it" id="arTitle">Scanning node...</div>
+              <div class="ar-ix" id="arText">Point camera at installation marker to access AR overlay and contribute experience data.</div>
+            </div>
+          </div>
+          <div class="ar-lab">Scan QR at any installation node<br>to access overlays and contribute</div>
+        </div>
+      </div>
+      <div>
+        <div class="sec-label" style="margin-bottom:11px">Recent Contributions (anonymised)</div>
+        <div class="feed-list" id="feedList"></div>
+      </div>
+    </div>
+    <div class="side-panel side-r" style="display:flex;flex-direction:column;gap:18px">
+      <div>
+        <div class="ds-label">Community Data</div>
+        <div class="cs-row"><span class="cs-lab">AR sessions today</span><span class="cs-val a" id="csSess">0</span></div>
+        <div class="cs-row"><span class="cs-lab">Contributions total</span><span class="cs-val" id="csTotal">0</span></div>
+        <div class="cs-row"><span class="cs-lab">Avg helpfulness</span><span class="cs-val" id="csHelp">—</span></div>
+        <div class="cs-row"><span class="cs-lab">Avg safety</span><span class="cs-val" id="csSafety">—</span></div>
+      </div>
+      <div>
+        <div class="ds-label">Top Reported Issue</div>
+        <div id="csTopIssue" style="font-size:11px;color:var(--amber);font-family:'Helvetica Neue',Arial,sans-serif;line-height:1.6">—</div>
+      </div>
+      <div>
+        <div class="ds-label">What the AR App Records</div>
+        <div style="font-size:10px;color:var(--text-dim);line-height:1.8">
+          ✓ Dwell time at nodes<br>
+          ✓ Overlay engagement<br>
+          ✓ Route completion<br>
+          ✓ Your explicit ratings<br>
+          ✓ Optional free text<br><br>
+          ✗ GPS or location<br>
+          ✗ AR camera images<br>
+          ✗ Personal identity<br>
+          ✗ Precise timestamps<br><br>
+          <span style="color:var(--text-dim)">Retention: 90 days.<br>Legal basis: Art. 6(1)(a) GDPR.<br>Right to withdraw at any time.</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── INSIGHTS ── -->
+  <div class="view" id="vi">
+    <div class="sec-label" style="margin-bottom:14px">Segment Performance · Citizen AR Data</div>
+    <div class="ins-seg-row" id="insSegRow"></div>
+    <div class="ins-bot">
+      <div class="ins-p">
+        <div class="ins-pt">Top Feedback Themes</div>
+        <div id="insThemes"></div>
+        <div class="ins-pt" style="margin-top:14px">AR Engagement</div>
+        <div id="insArM"></div>
+      </div>
+      <div class="ins-p">
+        <div class="ins-pt">Adaptation Log</div>
+        <div id="insAdaptDone"></div>
+      </div>
+      <div class="ins-p">
+        <div class="ins-pt">Pending Adaptations</div>
+        <div id="insAdaptPend"></div>
+        <div class="ins-pt" style="margin-top:14px">Confidence by Segment</div>
+        <div id="insConf"></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<footer>
+  <div class="f-stat"><div class="f-lab">Route</div><div class="f-val">3.8</div><div class="f-unit">km</div></div>
+  <div class="f-stat"><div class="f-lab">Walk Time</div><div class="f-val">46</div><div class="f-unit">min avg</div></div>
+  <div class="f-stat"><div class="f-lab">Cycle Time</div><div class="f-val">18</div><div class="f-unit">min avg</div></div>
+  <div class="f-stat"><div class="f-lab">AR Contributions</div><div class="f-val" id="fContribs">50</div><div class="f-unit">since launch</div></div>
+  <div class="f-stat"><div class="f-lab">Adaptations Applied</div><div class="f-val">4</div><div class="f-unit">from citizen data</div></div>
+</footer>
+
+<script>
+// ── DATA ─────────────────────────────────────────────────────────────────────
+
+const SEGS = [
+  {
+    id:0, label:"Segment 1", dist:"0–0.8 km", time:"0–10 min", name:"Within Detmerode",
+    tags:["Estate","Wayfinding","Social Proof"], type:"estate",
+    desc:"Open modernist housing estate — wide gaps between towers, no readable pedestrian hierarchy. Wayfinding nodes create a legible north–south axis toward the bridge for the first time.",
+    nodes:[
+      {name:"Origin Node",sensor:"LiDAR",response:"Directional lighting + footfall counter",status:"on"},
+      {name:"Wayfinding Post ×3",sensor:"IR thermal",response:"Distance-to-center + direction arrow",status:"on"},
+      {name:"Stephanuskirche Panel",sensor:"Passive",response:"Aalto — nineteen floating ceiling discs",status:"idle"}
+    ],
+    content:{type:"counter",value:247,label:"people walked this route today",sub:"Porschestrasse — 3.8 km"},
+    leila:"Uncertain → oriented. The estate, which always felt like a maze of equivalent paths, suddenly has a direction.",
+    erik:"Routine → a small puncture of curiosity. He reads the Aalto panel for the first time in four years."
+  },
+  {
+    id:1, label:"Segment 2", dist:"0.8–1.0 km", time:"10–13 min", name:"Zusammenrücken Bridge",
+    tags:["Gateway","Audio","Threshold"], type:"bridge",
+    desc:"The 90m bridge (2021, €3M) crosses Braunschweiger Straße above grade. Its name means 'coming closer together'. The intervention transforms it from civic infrastructure into the first experiential threshold of the journey.",
+    nodes:[
+      {name:"Gateway Lighting",sensor:"LiDAR",response:"Path-edge lights activate ahead",status:"on"},
+      {name:"Bridge Entry Marker",sensor:"Passive",response:'"Zusammenrücken — coming closer together"',status:"on"},
+      {name:"Directional Tone",sensor:"LiDAR",response:"Low audio cue — presence-triggered",status:"idle"}
+    ],
+    content:{type:"quote",text:'Zusammenrücken — "coming closer together"\nDetmerode to Westhagen, 2021\n\nYou are 25 minutes from Porschestrasse.'},
+    leila:"The first real threshold. She is no longer in the estate. She is in the route. Below her, cars move fast — she does not feel like she is losing.",
+    erik:"Moving fast, but accumulating small things. He knew the bridge. He did not know its name."
+  },
+  {
+    id:2, label:"Segment 3", dist:"1.0–2.2 km", time:"13–28 min", name:"Rothehofer Forst",
+    tags:["Landscape","Responsive Lighting","Audio"], type:"forest",
+    desc:"Protected conservation corridor planned as a buffer between districts. A moving pool of ground light tracks the user 40m ahead and behind. At the midpoint, an audio layer reveals the history of this designed separation.",
+    nodes:[
+      {name:"Corridor Pulse",sensor:"LiDAR",response:"Moving light pool — 40m ahead, fades behind",status:"on"},
+      {name:"Midpoint Marker",sensor:"LiDAR",response:"Progress: 1.9 km · 19 min to Porschestrasse",status:"on"},
+      {name:"Directional Audio",sensor:"LiDAR",response:"Landscape history narrative",status:"on"}
+    ],
+    content:{type:"quote",text:"This forest was planned as a boundary.\nIn the 1960s, Wolfsburg's districts were built to be self-contained.\nDetmerode on one side. Westhagen on the other.\nThe bridge you just crossed didn't exist until 2021.\nYou are walking a route that wasn't possible three years ago."},
+    leila:"Unexpectedly calm. The forest feels safe. The audio makes her feel part of something — the history of the city.",
+    erik:"Something is accumulating. He resolves to walk this section once."
+  },
+  {
+    id:3, label:"Segment 4", dist:"2.2–2.8 km", time:"28–36 min", name:"Westhagen",
+    tags:["Transition Zone","Directional","Social Proof"], type:"transition",
+    desc:"Westhagen is a Sanierungsgebiet — active urban renewal. Risk of losing route legibility in a through-zone. Directional installations reinforce the corridor northward while surfacing the district's own regeneration story.",
+    nodes:[
+      {name:"Forest Exit Node",sensor:"LiDAR",response:"Directional post, footfall counter",status:"on"},
+      {name:"Westhagen Panel",sensor:"Passive",response:"District renewal story overlay",status:"idle"},
+      {name:"Transition Marker",sensor:"IR thermal",response:"District-crossing cue, onward direction",status:"idle"}
+    ],
+    content:{type:"counter",value:612,label:"people passed this point today",sub:"Westhagen · 15 minutes to Porschestrasse"},
+    leila:"Settled into the rhythm. The city is readable. She belongs in it on foot.",
+    erik:"Part of the flow. He nods at the number instinctively."
+  },
+  {
+    id:4, label:"Segment 5", dist:"2.8–3.8 km", time:"36–46 min", name:"City Centre Approach",
+    tags:["Arrival","Density","Social Proof"], type:"city",
+    desc:"Installation density increases as the user approaches. Countdown posts at 10, 7, 4, 2 minutes. Responsive canopy lighting intensifies with pedestrian flow.",
+    nodes:[
+      {name:"Countdown Posts ×5",sensor:"LiDAR",response:"10 min → 7 → 4 → 2 → Arrival signal",status:"on"},
+      {name:"Canopy Lighting",sensor:"LiDAR",response:"Intensity scales with pedestrian density",status:"on"},
+      {name:"Arrival Display",sensor:"LiDAR",response:"Aggregate daily count at Porschestrasse",status:"on"}
+    ],
+    content:{type:"counter",value:1847,label:"people walked or cycled from the districts today",sub:"You are one of them."},
+    leila:"Arrival. Quiet satisfaction. The route gave her something — not just the destination but a different understanding of where she lives.",
+    erik:"The route he knew became slightly larger. That's enough."
+  }
+];
+
+const HOURLY=[{h:"07",v:42},{h:"08",v:118},{h:"09",v:95},{h:"10",v:72},{h:"11",v:88},{h:"12",v:104},{h:"13",v:96},{h:"14",v:83},{h:"15",v:91},{h:"16",v:127},{h:"17",v:184},{h:"18",v:201},{h:"19",v:156},{h:"20",v:98},{h:"21",v:67}];
+
+// Seed data — 50 contributions reflecting real patterns
+const SEED = [
+  // Segment 0 – estate (12)
+  {seg:0,mode:"walking",slot:"morning",first:true,noticed:"yes",help:3,safety:4,effort:"harder",standout:"Origin Node",improvements:["More wayfinding posts","Cultural content"],text:"Couldn't find the right path at first"},
+  {seg:0,mode:"walking",slot:"afternoon",first:true,noticed:"partly",help:3,safety:4,effort:"harder",standout:"Origin Node",improvements:["More wayfinding posts"],text:""},
+  {seg:0,mode:"cycling",slot:"morning",first:false,noticed:"yes",help:4,safety:4,effort:"about-right",standout:"Stephanuskirche Panel",improvements:["Cultural content"],text:"Aalto panel was a surprise"},
+  {seg:0,mode:"walking",slot:"evening",first:true,noticed:"partly",help:2,safety:3,effort:"harder",standout:"Origin Node",improvements:["More wayfinding posts","Brighter lighting"],text:"Lost twice before finding the post"},
+  {seg:0,mode:"walking",slot:"afternoon",first:false,noticed:"yes",help:4,safety:4,effort:"about-right",standout:"Stephanuskirche Panel",improvements:["Cultural content"],text:""},
+  {seg:0,mode:"walking",slot:"morning",first:true,noticed:"partly",help:3,safety:4,effort:"harder",standout:"Origin Node",improvements:["More wayfinding posts"],text:"Need more posts near the towers"},
+  {seg:0,mode:"cycling",slot:"afternoon",first:false,noticed:"no",help:3,safety:5,effort:"about-right",standout:"Origin Node",improvements:[],text:""},
+  {seg:0,mode:"walking",slot:"evening",first:true,noticed:"yes",help:3,safety:3,effort:"harder",standout:"Origin Node",improvements:["More wayfinding posts","Brighter lighting"],text:"Dark between blocks"},
+  {seg:0,mode:"walking",slot:"morning",first:true,noticed:"yes",help:4,safety:4,effort:"about-right",standout:"Stephanuskirche Panel",improvements:["Cultural content"],text:""},
+  {seg:0,mode:"walking",slot:"afternoon",first:false,noticed:"yes",help:4,safety:4,effort:"easier",standout:"Origin Node",improvements:[],text:""},
+  {seg:0,mode:"cycling",slot:"morning",first:false,noticed:"yes",help:4,safety:5,effort:"easier",standout:"Stephanuskirche Panel",improvements:["Cultural content"],text:"More history panels please"},
+  {seg:0,mode:"walking",slot:"evening",first:true,noticed:"partly",help:2,safety:3,effort:"harder",standout:"Origin Node",improvements:["More wayfinding posts","Brighter lighting"],text:""},
+  // Segment 1 – bridge (8)
+  {seg:1,mode:"walking",slot:"morning",first:true,noticed:"yes",help:5,safety:5,effort:"easier",standout:"Bridge Entry Marker",improvements:[],text:"Didn't know the bridge had a name"},
+  {seg:1,mode:"walking",slot:"afternoon",first:false,noticed:"yes",help:4,safety:5,effort:"about-right",standout:"Gateway Lighting",improvements:["Audio louder"],text:""},
+  {seg:1,mode:"cycling",slot:"morning",first:false,noticed:"yes",help:5,safety:5,effort:"easier",standout:"Bridge Entry Marker",improvements:[],text:"The threshold moment works"},
+  {seg:1,mode:"walking",slot:"evening",first:true,noticed:"yes",help:5,safety:5,effort:"easier",standout:"Bridge Entry Marker",improvements:["Audio louder"],text:"Audio was too quiet with traffic noise"},
+  {seg:1,mode:"walking",slot:"afternoon",first:true,noticed:"yes",help:4,safety:5,effort:"easier",standout:"Gateway Lighting",improvements:[],text:""},
+  {seg:1,mode:"walking",slot:"morning",first:false,noticed:"yes",help:5,safety:5,effort:"easier",standout:"Bridge Entry Marker",improvements:["Audio louder"],text:"Tone barely audible"},
+  {seg:1,mode:"cycling",slot:"afternoon",first:false,noticed:"yes",help:4,safety:5,effort:"about-right",standout:"Gateway Lighting",improvements:[],text:""},
+  {seg:1,mode:"walking",slot:"evening",first:true,noticed:"yes",help:4,safety:5,effort:"easier",standout:"Bridge Entry Marker",improvements:["Audio louder"],text:""},
+  // Segment 2 – forest (14)
+  {seg:2,mode:"walking",slot:"evening",first:true,noticed:"yes",help:4,safety:2,effort:"about-right",standout:"Midpoint Marker",improvements:["Brighter lighting after dark"],text:"Forest was scary at dusk"},
+  {seg:2,mode:"walking",slot:"evening",first:false,noticed:"yes",help:4,safety:2,effort:"about-right",standout:"Corridor Pulse",improvements:["Brighter lighting after dark"],text:"Light pool helps but needs to be wider"},
+  {seg:2,mode:"walking",slot:"morning",first:true,noticed:"yes",help:5,safety:5,effort:"easier",standout:"Midpoint Marker",improvements:[],text:"Audio at midpoint was moving"},
+  {seg:2,mode:"cycling",slot:"afternoon",first:false,noticed:"yes",help:3,safety:4,effort:"about-right",standout:"Corridor Pulse",improvements:[],text:"Too fast to engage with audio"},
+  {seg:2,mode:"walking",slot:"evening",first:true,noticed:"yes",help:3,safety:2,effort:"about-right",standout:"Corridor Pulse",improvements:["Brighter lighting after dark","Wider light pool"],text:""},
+  {seg:2,mode:"walking",slot:"morning",first:false,noticed:"yes",help:5,safety:5,effort:"easier",standout:"Midpoint Marker",improvements:[],text:"The history narration made me stop"},
+  {seg:2,mode:"walking",slot:"evening",first:true,noticed:"yes",help:4,safety:2,effort:"harder",standout:"Corridor Pulse",improvements:["Brighter lighting after dark"],text:""},
+  {seg:2,mode:"walking",slot:"afternoon",first:false,noticed:"yes",help:5,safety:4,effort:"easier",standout:"Midpoint Marker",improvements:[],text:""},
+  {seg:2,mode:"walking",slot:"evening",first:false,noticed:"yes",help:4,safety:3,effort:"about-right",standout:"Corridor Pulse",improvements:["Brighter lighting after dark"],text:"19:00 was still too dark"},
+  {seg:2,mode:"cycling",slot:"morning",first:false,noticed:"yes",help:4,safety:5,effort:"easier",standout:"Corridor Pulse",improvements:[],text:""},
+  {seg:2,mode:"walking",slot:"evening",first:true,noticed:"yes",help:3,safety:2,effort:"harder",standout:"Midpoint Marker",improvements:["Brighter lighting after dark","Wider light pool"],text:"Felt isolated"},
+  {seg:2,mode:"walking",slot:"morning",first:true,noticed:"yes",help:5,safety:5,effort:"easier",standout:"Midpoint Marker",improvements:["Cultural content"],text:"Would love more audio content"},
+  {seg:2,mode:"walking",slot:"afternoon",first:false,noticed:"yes",help:4,safety:4,effort:"about-right",standout:"Corridor Pulse",improvements:[],text:""},
+  {seg:2,mode:"walking",slot:"evening",first:true,noticed:"yes",help:4,safety:2,effort:"about-right",standout:"Corridor Pulse",improvements:["Brighter lighting after dark"],text:""},
+  // Segment 3 – westhagen (9)
+  {seg:3,mode:"walking",slot:"afternoon",first:true,noticed:"partly",help:2,safety:4,effort:"harder",standout:"Forest Exit Node",improvements:["Clearer direction","More wayfinding posts"],text:"Lost direction after exiting forest"},
+  {seg:3,mode:"walking",slot:"morning",first:false,noticed:"yes",help:3,safety:4,effort:"about-right",standout:"Forest Exit Node",improvements:["Clearer direction"],text:""},
+  {seg:3,mode:"walking",slot:"afternoon",first:true,noticed:"no",help:2,safety:4,effort:"harder",standout:"Forest Exit Node",improvements:["Clearer direction","More wayfinding posts"],text:"Couldn't find path through construction"},
+  {seg:3,mode:"cycling",slot:"morning",first:false,noticed:"yes",help:4,safety:5,effort:"easier",standout:"Forest Exit Node",improvements:[],text:""},
+  {seg:3,mode:"walking",slot:"evening",first:true,noticed:"partly",help:2,safety:4,effort:"harder",standout:"Forest Exit Node",improvements:["Clearer direction","More wayfinding posts"],text:""},
+  {seg:3,mode:"walking",slot:"afternoon",first:false,noticed:"yes",help:3,safety:4,effort:"about-right",standout:"Westhagen Panel",improvements:["Cultural content"],text:"Panel about renewal was interesting"},
+  {seg:3,mode:"walking",slot:"morning",first:true,noticed:"partly",help:2,safety:4,effort:"harder",standout:"Forest Exit Node",improvements:["Clearer direction"],text:"Through-zone is confusing"},
+  {seg:3,mode:"cycling",slot:"afternoon",first:false,noticed:"yes",help:4,safety:5,effort:"easier",standout:"Forest Exit Node",improvements:[],text:""},
+  {seg:3,mode:"walking",slot:"afternoon",first:true,noticed:"no",help:2,safety:4,effort:"harder",standout:"Forest Exit Node",improvements:["Clearer direction","More wayfinding posts"],text:"No idea where to go after Westhagen"},
+  // Segment 4 – city (7)
+  {seg:4,mode:"walking",slot:"afternoon",first:true,noticed:"yes",help:5,safety:5,effort:"easier",standout:"Arrival Display",improvements:[],text:"Arrival counter was genuinely moving"},
+  {seg:4,mode:"walking",slot:"morning",first:false,noticed:"yes",help:5,safety:5,effort:"easier",standout:"Countdown Posts ×5",improvements:[],text:""},
+  {seg:4,mode:"cycling",slot:"afternoon",first:false,noticed:"yes",help:5,safety:5,effort:"easier",standout:"Canopy Lighting",improvements:[],text:""},
+  {seg:4,mode:"walking",slot:"evening",first:true,noticed:"yes",help:5,safety:5,effort:"easier",standout:"Arrival Display",improvements:[],text:"1847 people — I was emotional"},
+  {seg:4,mode:"walking",slot:"afternoon",first:true,noticed:"yes",help:4,safety:5,effort:"about-right",standout:"Countdown Posts ×5",improvements:[],text:""},
+  {seg:4,mode:"walking",slot:"morning",first:false,noticed:"yes",help:5,safety:5,effort:"easier",standout:"Arrival Display",improvements:[],text:""},
+  {seg:4,mode:"cycling",slot:"morning",first:false,noticed:"yes",help:4,safety:5,effort:"easier",standout:"Canopy Lighting",improvements:[],text:""}
+];
+
+// ── localStorage ────────────────────────────────────────────────────────────
+
+function loadContribs() {
+  try { return JSON.parse(localStorage.getItem('ac_contribs') || '[]'); } catch(e){ return []; }
+}
+function saveContrib(c) {
+  const all = loadContribs();
+  all.push({...c, ts: Date.now(), id: Math.random().toString(36).slice(2)});
+  localStorage.setItem('ac_contribs', JSON.stringify(all));
+}
+function allContribs() { return [...SEED, ...loadContribs()]; }
+
+// ── SYSTEM VIEW ─────────────────────────────────────────────────────────────
+
+let activeSegIdx = 0;
+let journeyRunning = false;
+let journeyTimer = null;
+
+function renderSegList() {
+  document.getElementById('segList').innerHTML = SEGS.map((s,i) => {
+    const on = s.nodes.filter(n=>n.status==='on').length;
+    return `<div class="seg-item${i===activeSegIdx?' active':''}" onclick="selectSeg(${i})">
+      <div class="seg-axis">
+        <div class="ax-t" style="${i===0?'opacity:0':''}"></div>
+        <div class="seg-node"></div>
+        <div class="ax-b" style="${i===SEGS.length-1?'opacity:0':''}"></div>
+      </div>
+      <div class="seg-card">
+        <div class="sc-num">${s.label} · ${s.dist}</div>
+        <div class="sc-name">${s.name}</div>
+        <div class="sc-tags">
+          <span class="tag on">${on}/${s.nodes.length} active</span>
+          ${s.tags.slice(0,2).map(t=>`<span class="tag">${t}</span>`).join('')}
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderDetail() {
+  const s = SEGS[activeSegIdx];
+  let av = '';
+  if(s.type==='forest') av=`<div class="ambient-vis"><div class="av-fl"></div><div class="av-fr"></div><div class="av-path"></div><div class="av-pool"></div><div class="av-fm">Rothehofer Forst · Responsive Corridor</div></div>`;
+  else if(s.type==='bridge') av=`<div class="ambient-vis" style="background:linear-gradient(180deg,#05070f,#080d1a)"><div class="av-blab">Zusammenrücken Bridge · 90m · Gateway</div><div class="av-bd"></div><div class="av-bl"></div></div>`;
+  else av=`<div class="ambient-vis"><div class="av-path"></div><div class="av-pool" style="background:radial-gradient(ellipse,rgba(245,166,35,${s.type==='city'?.4:.2}) 0%,transparent 70%);width:${s.type==='city'?180:90}px"></div></div>`;
+  let cb = s.content.type==='counter'
+    ? `<div class="cb"><div class="cb-n">${s.content.value.toLocaleString()}</div><div class="cb-nl">${s.content.label}</div>${s.content.sub?`<div class="cb-ns">${s.content.sub}</div>`:''}</div>`
+    : `<div class="cb"><div class="cb-q">${s.content.text.replace(/\n/g,'<br>')}</div></div>`;
+  document.getElementById('detailPanel').innerHTML = `
+    <div class="dp-header">
+      <div class="dp-ey">${s.label} · ${s.dist} · ${s.time}</div>
+      <div class="dp-title">${s.name}</div>
+      <div class="dp-desc">${s.desc}</div>
+    </div>
+    ${av}
+    <div><div class="sec-label" style="margin-bottom:9px">Installations</div>
+      <div class="install-grid">${s.nodes.map(n=>`<div class="ic"><div class="ic-lab">${n.name}</div><div class="ic-val">${n.response}</div><div class="ic-ft"><div class="ic-dot ${n.status}"></div><span class="ic-sen">${n.sensor}</span></div></div>`).join('')}
+      </div></div>
+    <div><div class="sec-label" style="margin-bottom:9px">Installation Content</div>${cb}</div>
+    <div><div class="sec-label" style="margin-bottom:9px">User Response</div>
+      <div class="user-grid">
+        <div class="uc"><div class="uc-name">Leila · habitual car user</div><div class="uc-st">${s.leila}</div></div>
+        <div class="uc"><div class="uc-name">Erik · regular cyclist</div><div class="uc-st">${s.erik}</div></div>
+      </div></div>
+    <button class="journey-btn${journeyRunning?' running':''}" onclick="toggleJourney()">${journeyRunning?'■ Stop Simulation':'▶ Simulate Walk — Leila\'s Route'}</button>`;
+}
+
+function renderNodes() {
+  const s = SEGS[activeSegIdx];
+  document.getElementById('nodeList').innerHTML = s.nodes.map(n=>`<div class="nl-row"><div class="nl-dot ${n.status}"></div><span class="nl-name">${n.name}</span><span class="nl-sen">${n.sensor}</span></div>`).join('');
+  document.getElementById('mNodes').textContent = s.nodes.filter(n=>n.status==='on').length;
+}
+
+function renderBars() {
+  const max = Math.max(...HOURLY.map(d=>d.v));
+  document.getElementById('barList').innerHTML = HOURLY.map(d=>`<div class="br-row"><div class="br-lab">${d.h}h</div><div class="br-tr"><div class="br-fi" style="width:${(d.v/max*100).toFixed(0)}%"></div></div><div class="br-val">${d.v}</div></div>`).join('');
+}
+
+function selectSeg(i) { activeSegIdx=i; renderSegList(); renderDetail(); renderNodes(); }
+
+function toggleJourney() {
+  if(journeyRunning){ journeyRunning=false; clearInterval(journeyTimer); journeyTimer=null; renderDetail(); return; }
+  journeyRunning=true; activeSegIdx=0; selectSeg(0);
+  journeyTimer=setInterval(()=>{
+    if(activeSegIdx<SEGS.length-1){ selectSeg(activeSegIdx+1); }
+    else{ journeyRunning=false; clearInterval(journeyTimer); journeyTimer=null; renderDetail(); }
+  },3500);
+}
+
+// ── CONTRIBUTE WIZARD ────────────────────────────────────────────────────────
+
+const WIZ_STEPS = ['Consent','Your Walk','Installations','Feedback','Done'];
+let wizStep = 0;
+let wizData = { seg:null, mode:null, slot:null, first:null, noticed:null, help:0, safety:0, effort:null, standout:null, improvements:[], text:'' };
+let consentChecked = false;
+
+const IMPROVEMENTS = [
+  "More wayfinding posts",
+  "Brighter lighting after dark",
+  "Wider light pool in forest",
+  "Audio louder / clearer",
+  "Cultural content at this node",
+  "Clearer direction through zone",
+  "More social proof counters"
+];
+
+const STANDOUTS = ["Origin Node","Stephanuskirche Panel","Gateway Lighting","Bridge Entry Marker","Corridor Pulse","Midpoint Marker","Directional Audio","Forest Exit Node","Westhagen Panel","Countdown Posts","Arrival Display"];
+
+function renderWizard() {
+  const pane = document.getElementById('wizardPane');
+  const prog = WIZ_STEPS.map((_,i)=>`<div class="wiz-seg ${i<wizStep?'done':i===wizStep?'cur':''}"></div>`).join('');
+
+  let body = '';
+  let nav = '';
+
+  if(wizStep===0) {
+    body = `
+      <div class="wiz-title">Before you contribute</div>
+      <div class="wiz-sub">Your experience data helps improve installations in real time. Here's exactly what's collected.</div>
+      <ul class="consent-list">
+        <li>Anonymous session ID (no name, no account)</li>
+        <li>Segment walked and travel mode</li>
+        <li>Installation helpfulness and safety ratings</li>
+        <li>Optional free text (your words only)</li>
+        <li>AR dwell time and overlay engagement</li>
+        <li class="no">No GPS or location data</li>
+        <li class="no">No camera images or biometrics</li>
+        <li class="no">No personal identity of any kind</li>
+      </ul>
+      <div class="cc-wrap${consentChecked?' on':''}" onclick="toggleConsent()">
+        <div class="cc-box">${consentChecked?'✓':''}</div>
+        <div class="cc-text">I understand what is collected and freely consent to contributing anonymous AR experience data to the Active Corridors pilot project (Art. 6(1)(a) GDPR). I can withdraw at any time.</div>
+      </div>
+      <div class="gdpr-note">Data controller: Stadt Wolfsburg / Active Corridors Pilot · Retention: 90 days · Purpose: improving route installations</div>`;
+    nav = `<div class="wiz-nav"><button class="wiz-btn wnx" onclick="wizNext()" ${!consentChecked?'disabled':''}>Continue →</button></div>`;
+  }
+  else if(wizStep===1) {
+    body = `
+      <div class="wiz-title">Your walk</div>
+      <div class="form-group"><span class="form-lab">Which segment?</span>
+        <div class="seg-pick">${SEGS.map(s=>`<div class="sp${wizData.seg===s.id?' sel':''}" onclick="wSet('seg',${s.id});renderWizard()"><div class="sp-dot"></div><span class="sp-name">${s.name}</span><span class="sp-d">${s.dist}</span></div>`).join('')}</div></div>
+      <div class="form-group"><span class="form-lab">How did you travel?</span>
+        <div class="radio-g">
+          ${['walking','cycling'].map(m=>`<div class="rb${wizData.mode===m?' sel':''}" onclick="wSet('mode','${m}');renderWizard()"><div class="rb-dot"></div>${m.charAt(0).toUpperCase()+m.slice(1)}</div>`).join('')}
+        </div></div>
+      <div class="form-group"><span class="form-lab">Time of day?</span>
+        <div class="radio-g">
+          ${[['morning','Morning (06–10)'],['midday','Midday (10–14)'],['afternoon','Afternoon (14–18)'],['evening','Evening (18–22)']].map(([v,l])=>`<div class="rb${wizData.slot===v?' sel':''}" onclick="wSet('slot','${v}');renderWizard()"><div class="rb-dot"></div>${l}</div>`).join('')}
+        </div></div>
+      <div class="form-group"><span class="form-lab">First time on this route?</span>
+        <div class="radio-g">
+          ${[[true,'Yes, first time'],[false,'No, I know this route']].map(([v,l])=>`<div class="rb${wizData.first===v?' sel':''}" onclick="wSet('first',${v});renderWizard()"><div class="rb-dot"></div>${l}</div>`).join('')}
+        </div></div>`;
+    const ok = wizData.seg!==null && wizData.mode && wizData.slot && wizData.first!==null;
+    nav = `<div class="wiz-nav"><button class="wiz-btn wbk" onclick="wizBack()">← Back</button><button class="wiz-btn wnx" onclick="wizNext()" ${!ok?'disabled':''}>Continue →</button></div>`;
+  }
+  else if(wizStep===2) {
+    body = `
+      <div class="wiz-title">Installation experience</div>
+      <div class="form-group"><span class="form-lab">Did you notice the installations?</span>
+        <div class="radio-g">
+          ${[['yes','Yes, clearly'],['partly','Partly'],['no','Not really']].map(([v,l])=>`<div class="rb${wizData.noticed===v?' sel':''}" onclick="wSet('noticed','${v}');renderWizard()"><div class="rb-dot"></div>${l}</div>`).join('')}
+        </div></div>
+      <div class="form-group"><span class="form-lab">Wayfinding helpfulness</span>
+        <div class="stars">${[1,2,3,4,5].map(n=>`<div class="star${wizData.help>=n?' on':''}" onclick="wSet('help',${n});renderWizard()">★</div>`).join('')}</div></div>
+      <div class="form-group"><span class="form-lab">Felt safe on this segment</span>
+        <div class="stars">${[1,2,3,4,5].map(n=>`<div class="star${wizData.safety>=n?' on':''}" onclick="wSet('safety',${n});renderWizard()">★</div>`).join('')}</div></div>
+      <div class="form-group"><span class="form-lab">Route vs your expectation</span>
+        <div class="radio-g">
+          ${[['easier','Easier than expected'],['about-right','About what I expected'],['harder','Harder / longer than expected']].map(([v,l])=>`<div class="rb${wizData.effort===v?' sel':''}" onclick="wSet('effort','${v}');renderWizard()"><div class="rb-dot"></div>${l}</div>`).join('')}
+        </div></div>`;
+    const ok = wizData.noticed && wizData.help>0 && wizData.safety>0 && wizData.effort;
+    nav = `<div class="wiz-nav"><button class="wiz-btn wbk" onclick="wizBack()">← Back</button><button class="wiz-btn wnx" onclick="wizNext()" ${!ok?'disabled':''}>Continue →</button></div>`;
+  }
+  else if(wizStep===3) {
+    body = `
+      <div class="wiz-title">What stood out?</div>
+      <div class="form-group"><span class="form-lab">Most memorable moment</span>
+        <select class="wiz-sel" onchange="wSet('standout',this.value);renderWizard()">
+          <option value="">— Select a node</option>
+          ${STANDOUTS.map(s=>`<option value="${s}"${wizData.standout===s?' selected':''}>${s}</option>`).join('')}
+        </select></div>
+      <div class="form-group"><span class="form-lab">What would improve it?</span>
+        <div class="check-g">${IMPROVEMENTS.map(imp=>`<div class="ci${wizData.improvements.includes(imp)?' on':''}" onclick="toggleImp('${imp}')"><div class="ci-box">${wizData.improvements.includes(imp)?'✓':''}</div>${imp}</div>`).join('')}</div></div>
+      <div class="form-group"><span class="form-lab">Anything else? (optional)</span>
+        <textarea class="wiz-ta" rows="3" maxlength="200" oninput="wSet('text',this.value);updateCharCount(this)" placeholder="Your words here...">${wizData.text}</textarea>
+        <div class="char-ct" id="charCount">${wizData.text.length}/200</div>
+      </div>`;
+    nav = `<div class="wiz-nav"><button class="wiz-btn wbk" onclick="wizBack()">← Back</button><button class="wiz-btn wsb" onclick="wizSubmit()">Submit contribution</button></div>`;
+  }
+  else if(wizStep===4) {
+    const segName = wizData.seg!==null ? SEGS[wizData.seg].name : '—';
+    body = `
+      <div class="ty-box">
+        <div class="ty-title">Contribution recorded.</div>
+        <div class="ty-text">Your anonymous data has been added to the Active Corridors pilot dataset.</div>
+        <div class="ty-sum">
+          Segment: ${segName}<br>
+          Mode: ${wizData.mode}<br>
+          Helpfulness: ${'★'.repeat(wizData.help)}${'☆'.repeat(5-wizData.help)}<br>
+          Safety: ${'★'.repeat(wizData.safety)}${'☆'.repeat(5-wizData.safety)}<br>
+          Improvements flagged: ${wizData.improvements.length || 'none'}<br><br>
+          Installation adjustments are reviewed weekly.<br>Your feedback may influence changes within 7 days.
+        </div>
+      </div>`;
+    nav = `<div class="wiz-nav"><button class="wiz-btn wnx" onclick="wizReset()">Contribute another segment</button></div>`;
+    addToFeed(wizData);
+    updateContribStats();
+  }
+
+  pane.innerHTML = `
+    <div class="wiz-prog">${prog}</div>
+    <div class="wiz-eyebrow">Step ${wizStep+1} of ${WIZ_STEPS.length} — ${WIZ_STEPS[wizStep]}</div>
+    ${body}
+    ${nav}`;
+  updateArMockup();
+}
+
+function wSet(key, val) { wizData[key] = val; }
+function toggleConsent() { consentChecked=!consentChecked; renderWizard(); }
+function toggleImp(imp) { wizData.improvements.includes(imp)?wizData.improvements.splice(wizData.improvements.indexOf(imp),1):wizData.improvements.push(imp); renderWizard(); }
+function updateCharCount(el) { document.getElementById('charCount').textContent = el.value.length+'/200'; }
+function wizNext() { if(wizStep<4){ wizStep++; renderWizard(); } }
+function wizBack() { if(wizStep>0){ wizStep--; renderWizard(); } }
+function wizReset() { wizStep=0; wizData={seg:null,mode:null,slot:null,first:null,noticed:null,help:0,safety:0,effort:null,standout:null,improvements:[],text:''}; consentChecked=false; renderWizard(); }
+function wizSubmit() { saveContrib(wizData); wizStep=4; renderWizard(); document.getElementById('fContribs').textContent=allContribs().length; }
+
+function updateArMockup() {
+  const segIdx = wizData.seg !== null ? wizData.seg : 0;
+  const s = SEGS[segIdx];
+  const node = wizData.standout || s.nodes[0].name;
+  document.getElementById('arTitle').textContent = node;
+  document.getElementById('arText').textContent = s.nodes.find(n=>n.name===node)?.response || 'Engage with AR overlay to record experience data.';
+}
+
+// ── FEED ─────────────────────────────────────────────────────────────────────
+
+const FEED_NAMES = ["walker","cyclist","resident","commuter","visitor"];
+const TIME_AGO = ["just now","1 min ago","3 min ago","7 min ago","12 min ago","18 min ago","25 min ago","34 min ago"];
+
+function addToFeed(d) {
+  const list = document.getElementById('feedList');
+  if(!list) return;
+  const el = document.createElement('div');
+  el.className='fi';
+  const segName = d.seg!==null ? SEGS[d.seg].name : '—';
+  el.innerHTML=`<div class="fi-dot"></div><div class="fi-body"><div class="fi-top"><span class="fi-sn">${segName}</span><span class="fi-ts">just now</span></div><div class="fi-meta"><span>${d.mode||'walking'}</span><span class="fi-stars">${'★'.repeat(d.help||0)}</span><span>safety ${'★'.repeat(d.safety||0)}</span></div></div>`;
+  list.prepend(el);
+  if(list.children.length>6) list.lastChild.remove();
+}
+
+function renderSeedFeed() {
+  const list = document.getElementById('feedList');
+  if(!list) return;
+  const sample = SEED.slice(-6).reverse();
+  list.innerHTML = sample.map((d,i)=>{
+    const segName = SEGS[d.seg].name;
+    return `<div class="fi"><div class="fi-dot"></div><div class="fi-body"><div class="fi-top"><span class="fi-sn">${segName}</span><span class="fi-ts">${TIME_AGO[i+1]}</span></div><div class="fi-meta"><span>${d.mode}</span><span class="fi-stars">${'★'.repeat(d.help)}</span><span>safety ${'★'.repeat(d.safety)}</span></div></div></div>`;
+  }).join('');
+}
+
+function updateContribStats() {
+  const all = allContribs();
+  document.getElementById('csSess').textContent = all.length;
+  document.getElementById('csTotal').textContent = all.length;
+  const helps = all.map(c=>c.help).filter(Boolean);
+  const safes = all.map(c=>c.safety).filter(Boolean);
+  document.getElementById('csHelp').textContent = helps.length ? (helps.reduce((a,b)=>a+b)/helps.length).toFixed(1) : '—';
+  document.getElementById('csSafety').textContent = safes.length ? (safes.reduce((a,b)=>a+b)/safes.length).toFixed(1) : '—';
+  const impCount = {};
+  all.forEach(c=>(c.improvements||[]).forEach(i=>{ impCount[i]=(impCount[i]||0)+1; }));
+  const top = Object.entries(impCount).sort((a,b)=>b[1]-a[1])[0];
+  document.getElementById('csTopIssue').textContent = top ? `"${top[0]}" — reported by ${top[1]} contributors` : 'No issues yet';
+}
+
+// ── INSIGHTS ─────────────────────────────────────────────────────────────────
+
+const SEG_DATA = [
+  {help:3.1,safety:3.7,contribs:12,conf:58},
+  {help:4.3,safety:4.8,contribs:8,conf:48},
+  {help:3.9,safety:3.1,contribs:14,conf:68},
+  {help:2.8,safety:4.0,contribs:9,conf:52},
+  {help:4.8,safety:4.9,contribs:7,conf:42}
+];
+
+const THEMES = [
+  {label:"Forest path unsafe after dark",count:24},
+  {label:"Lost direction in Westhagen",count:19},
+  {label:"More wayfinding posts needed",count:17},
+  {label:"Bridge audio too quiet",count:12},
+  {label:"Cultural content very engaging",count:11},
+  {label:"Arrival signal was motivating",count:9}
+];
+
+const AR_METRICS = [
+  {label:"Avg gaze time at nodes",val:"18",unit:"s"},
+  {label:"Overlay engagement rate",val:"63",unit:"%"},
+  {label:"Route completion rate",val:"84",unit:"%"},
+  {label:"Return visits (same anon ID)",val:"31",unit:"%"}
+];
+
+const ADAPT_DONE = [
+  {seg:"Seg 3 · Forest",text:"Lighting window extended 18:00–21:00",basis:"Based on 24 safety reports (evening walkers)"},
+  {seg:"Seg 1 · Estate",text:"Additional wayfinding post at pond junction",basis:"Based on 17 lost-direction reports"},
+  {seg:"Seg 2 · Bridge",text:"Audio cue volume increased +30%",basis:"Based on 12 'too quiet' reports"},
+  {seg:"Seg 4 · Westhagen",text:"Directional marker frequency doubled",basis:"Based on 19 through-zone confusion reports"}
+];
+
+const ADAPT_PEND = [
+  {seg:"Seg 1 · Estate",text:"Cultural panel for Don Camillo towers",basis:"8 citizen requests — pending design"},
+  {seg:"Seg 3 · Forest",text:"Additional midpoint marker at forest entry",basis:"6 confusion reports at forest entry point"},
+  {seg:"Seg 5 · City",text:"Arrival signal extended 200m further out",basis:"5 requests for earlier signal — under review"}
+];
+
+function renderInsights() {
+  const maxHelp=5, maxSafe=5;
+  document.getElementById('insSegRow').innerHTML = SEG_DATA.map((d,i)=>{
+    const hPct=(d.help/maxHelp*100).toFixed(0);
+    const sPct=(d.safety/maxSafe*100).toFixed(0);
+    const hCls=d.help>=4?'bf-g':d.help>=3?'bf-m':'bf-r';
+    const sCls=d.safety>=4?'bf-g':d.safety>=3?'bf-m':'bf-r';
+    return `<div class="isc">
+      <div class="isc-num">${SEGS[i].label}</div>
+      <div class="isc-name">${SEGS[i].name}</div>
+      <div class="isc-row"><span class="isc-lab">Helpfulness</span><span class="isc-val">${d.help}/5</span></div>
+      <div class="isc-bar"><div class="isc-bf ${hCls}" style="width:${hPct}%"></div></div>
+      <div class="isc-row"><span class="isc-lab">Safety</span><span class="isc-val">${d.safety}/5</span></div>
+      <div class="isc-bar"><div class="isc-bf ${sCls}" style="width:${sPct}%"></div></div>
+      <div class="isc-ct">${d.contribs} contributions · ${d.conf}% confidence</div>
+    </div>`;
+  }).join('');
+
+  const maxTheme = Math.max(...THEMES.map(t=>t.count));
+  document.getElementById('insThemes').innerHTML = THEMES.map(t=>`<div class="th-row"><div class="th-top"><span class="th-lab">${t.label}</span><span class="th-ct">${t.count}</span></div><div class="th-bar"><div class="th-bf" style="width:${(t.count/maxTheme*100).toFixed(0)}%"></div></div></div>`).join('');
+  document.getElementById('insArM').innerHTML = AR_METRICS.map(m=>`<div class="arm-row"><span class="arm-lab">${m.label}</span><span class="arm-val">${m.val}</span><span class="arm-u">${m.unit}</span></div>`).join('');
+  document.getElementById('insAdaptDone').innerHTML = ADAPT_DONE.map(a=>`<div class="ad don"><div class="ad-head"><span class="ad-badge ab-d">Applied</span><span class="ad-seg">${a.seg}</span></div><div class="ad-text">${a.text}</div><div class="ad-basis">${a.basis}</div></div>`).join('');
+  document.getElementById('insAdaptPend').innerHTML = ADAPT_PEND.map(a=>`<div class="ad pen"><div class="ad-head"><span class="ad-badge ab-p">Pending</span><span class="ad-seg">${a.seg}</span></div><div class="ad-text">${a.text}</div><div class="ad-basis">${a.basis}</div></div>`).join('');
+  document.getElementById('insConf').innerHTML = SEG_DATA.map((d,i)=>`<div class="conf-row"><span class="conf-lab">${SEGS[i].name.split(' ').slice(0,2).join(' ')}</span><div class="conf-bar"><div class="conf-bf" style="width:${d.conf}%"></div></div><span class="conf-pct">${d.conf}%</span></div>`).join('');
+}
+
+// ── TAB SWITCHING ────────────────────────────────────────────────────────────
+
+function switchTab(id) {
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  event.currentTarget.classList.add('active');
+  if(id==='vc2'){ renderWizard(); renderSeedFeed(); updateContribStats(); }
+  if(id==='vi') renderInsights();
+}
+
+// ── CLOCK + COUNTERS ──────────────────────────────────────────────────────────
+
+function tick() {
+  document.getElementById('clock').textContent = new Date().toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+}
+function drift() {
+  if(Math.random()>.45){ const el=document.getElementById('mWalkers'); el.textContent=(parseInt(el.textContent.replace(/[,\.]/g,''))+Math.floor(Math.random()*3+1)).toLocaleString(); }
+  if(Math.random()>.7){ const el=document.getElementById('mCyclists'); el.textContent=(parseInt(el.textContent.replace(',',''))+1).toLocaleString(); }
+}
+
+// ── INIT ─────────────────────────────────────────────────────────────────────
+
+renderSegList();
+renderDetail();
+renderNodes();
+renderBars();
+document.getElementById('fContribs').textContent = allContribs().length;
+tick(); setInterval(tick,1000); setInterval(drift,3800);
+</script>
+</body>
+</html>

@@ -1,0 +1,917 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Installation Typologies — Active Corridors, Detmerode</title>
+  <style>
+    :root{
+      --bg:#07070f;--surface:#0e0e1a;--surface2:#121220;--border:#1c1c2e;
+      --amber:#f5a623;--amber-dim:#6a4510;--amber-glow:rgba(245,166,35,.15);
+      --green-bright:#4adb6e;--blue:#5a9abf;
+      --text:#b0b0cc;--text-dim:#484868;--text-bright:#e4e4f0;
+      --corten:#b08060;--timber:#7a5030;--steel:#606060;
+    }
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{background:var(--bg);color:var(--text);font-family:'SF Mono','Fira Code','Consolas',monospace;font-size:12px;height:100vh;overflow:hidden;display:grid;grid-template-rows:50px 1fr 72px}
+
+    /* HEADER */
+    header{background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 20px}
+    .h-left{display:flex;align-items:center;gap:16px}
+    .h-ey{font-size:9px;letter-spacing:.18em;color:var(--text-dim);text-transform:uppercase}
+    .h-title{font-size:13px;letter-spacing:.06em;color:var(--text-bright);text-transform:uppercase}
+    .h-div{width:1px;height:26px;background:var(--border)}
+    .h-meta{font-size:10px;color:var(--text-dim)}
+    .h-right{display:flex;align-items:center;gap:8px}
+    .h-link{font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--text-dim);text-decoration:none;padding:4px 10px;border:1px solid var(--border);border-radius:3px;transition:all .15s}
+    .h-link:hover{color:var(--text-bright);border-color:rgba(255,255,255,.2)}
+
+    /* MAIN */
+    main{display:grid;grid-template-columns:220px 1fr 260px;overflow:hidden}
+
+    /* LEFT NAV */
+    .typo-nav{background:var(--surface);border-right:1px solid var(--border);overflow-y:auto;padding:16px 12px;display:flex;flex-direction:column;gap:4px}
+    .typo-nav-label{font-size:9px;letter-spacing:.15em;text-transform:uppercase;color:var(--text-dim);margin-bottom:10px;padding-left:2px}
+    .tn-item{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:4px;border:1px solid transparent;cursor:pointer;transition:all .2s}
+    .tn-item:hover{background:rgba(255,255,255,.03);border-color:rgba(255,255,255,.1)}
+    .tn-item.active{background:var(--amber-glow);border-color:var(--amber)}
+    .tn-badge{width:24px;height:24px;border-radius:3px;background:rgba(255,255,255,.06);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:bold;color:var(--text-dim);flex-shrink:0;transition:all .2s;font-family:'Helvetica Neue',Arial,sans-serif}
+    .tn-item.active .tn-badge{background:var(--amber);border-color:var(--amber);color:#06060e}
+    .tn-body{flex:1;min-width:0}
+    .tn-name{font-size:10px;color:var(--text-bright);margin-bottom:2px}
+    .tn-ctx{font-size:9px;color:var(--text-dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .tn-count{font-size:8px;color:var(--text-dim);margin-top:8px;padding-top:8px;border-top:1px solid var(--border);text-align:center}
+
+    /* CENTER */
+    .center-panel{overflow-y:auto;padding:28px 28px 40px;display:flex;flex-direction:column;gap:24px}
+    .cp-header{border-bottom:1px solid var(--border);padding-bottom:14px}
+    .cp-badge{display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;background:var(--amber);border-radius:4px;font-size:16px;font-family:'Helvetica Neue',Arial,sans-serif;font-weight:700;color:#06060e;margin-bottom:10px}
+    .cp-title{font-size:22px;font-family:'Helvetica Neue',Arial,sans-serif;font-weight:300;color:var(--text-bright);letter-spacing:.03em;margin-bottom:6px}
+    .cp-role{font-size:12px;font-family:'Helvetica Neue',Arial,sans-serif;color:var(--text);line-height:1.65}
+
+    /* SCHEMATIC AREA */
+    .schematic-wrap{background:var(--surface2);border:1px solid var(--border);border-radius:4px;overflow:hidden;position:relative}
+    .schematic-label{position:absolute;top:10px;left:14px;font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--text-dim)}
+    .schematic-scale{position:absolute;top:10px;right:14px;font-size:9px;color:var(--text-dim)}
+    .schematic-wrap svg{display:block;width:100%;height:auto}
+
+    /* BEHAVIOR SECTION */
+    .behavior-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+    .beh-card{background:rgba(255,255,255,.025);border:1px solid var(--border);border-radius:4px;padding:11px}
+    .beh-label{font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--text-dim);margin-bottom:5px}
+    .beh-val{font-size:11px;color:var(--text-bright);font-family:'Helvetica Neue',Arial,sans-serif;line-height:1.5}
+
+    /* RESPONSE TIMELINE */
+    .timeline{display:flex;align-items:flex-start;gap:0;position:relative;padding-top:24px;margin-top:4px}
+    .timeline::before{content:'';position:absolute;top:32px;left:0;right:0;height:1px;background:var(--border)}
+    .tl-step{flex:1;display:flex;flex-direction:column;align-items:center;position:relative}
+    .tl-dot{width:8px;height:8px;border-radius:50%;background:var(--amber);margin-bottom:8px;position:relative;z-index:1}
+    .tl-dot.dim{background:var(--text-dim)}
+    .tl-time{font-size:9px;color:var(--amber);margin-bottom:4px}
+    .tl-desc{font-size:9px;color:var(--text-dim);text-align:center;line-height:1.4;padding:0 4px}
+
+    /* SPECS RIGHT PANEL */
+    .specs-panel{background:var(--surface);border-left:1px solid var(--border);overflow-y:auto;padding:20px 14px;display:flex;flex-direction:column;gap:18px}
+    .sp-label{font-size:9px;letter-spacing:.15em;text-transform:uppercase;color:var(--text-dim);margin-bottom:10px}
+    .spec-row{display:flex;justify-content:space-between;align-items:baseline;padding:5px 0;border-bottom:1px solid rgba(255,255,255,.04);gap:8px}
+    .sr-key{font-size:9px;color:var(--text-dim);flex-shrink:0}
+    .sr-val{font-size:10px;color:var(--text-bright);text-align:right;font-family:'Helvetica Neue',Arial,sans-serif}
+    .sr-val.a{color:var(--amber)}
+
+    /* Route placement */
+    .route-map{display:flex;flex-direction:column;gap:0}
+    .rm-seg{display:flex;align-items:center;gap:8px;padding:5px 0}
+    .rm-line-col{width:14px;flex-shrink:0;display:flex;flex-direction:column;align-items:center}
+    .rm-dot{width:6px;height:6px;border-radius:50%;background:var(--text-dim);transition:all .2s}
+    .rm-dot.here{background:var(--amber);box-shadow:0 0 6px var(--amber)}
+    .rm-vline{flex:1;width:1px;background:var(--border)}
+    .rm-seg-name{font-size:9px;color:var(--text-dim);flex:1}
+    .rm-types{display:flex;gap:3px;flex-wrap:wrap}
+    .rm-type-badge{font-size:8px;padding:1px 4px;border-radius:2px;background:rgba(255,255,255,.05);color:var(--text-dim)}
+    .rm-type-badge.here{background:rgba(245,166,35,.15);color:var(--amber)}
+
+    /* Material palette */
+    .mat-list{display:flex;flex-direction:column;gap:6px}
+    .mat-row{display:flex;align-items:center;gap:8px}
+    .mat-swatch{width:14px;height:14px;border-radius:2px;flex-shrink:0}
+    .mat-name{font-size:10px;color:var(--text);font-family:'Helvetica Neue',Arial,sans-serif}
+    .mat-note{font-size:9px;color:var(--text-dim);margin-left:auto}
+
+    /* FOOTER */
+    footer{background:var(--surface);border-top:1px solid var(--border);display:grid;grid-template-columns:repeat(6,1fr)}
+    .f-stat{padding:9px 14px;border-right:1px solid var(--border);display:flex;flex-direction:column;gap:1px}
+    .f-stat:last-child{border-right:none}
+    .f-lab{font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--text-dim)}
+    .f-val{font-size:20px;font-family:'Helvetica Neue',Arial,sans-serif;font-weight:200;color:var(--text-bright);letter-spacing:-.03em;line-height:1}
+    .f-unit{font-size:9px;color:var(--text-dim)}
+
+    ::-webkit-scrollbar{width:3px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+
+    /* SVG annotation styles (applied inline on SVG elements) */
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="h-left">
+    <div>
+      <div class="h-ey">Active Corridors — Wolfsburg</div>
+      <div class="h-title">Installation Typologies — Detmerode Corridor</div>
+    </div>
+    <div class="h-div"></div>
+    <div class="h-meta">6 types · 39 total units · 3.8 km</div>
+  </div>
+  <div class="h-right">
+    <a class="h-link" href="detmerode.html">← System View</a>
+  </div>
+</header>
+
+<main>
+
+  <!-- LEFT NAV -->
+  <div class="typo-nav">
+    <div class="typo-nav-label">Typologies</div>
+    <div class="tn-item active" onclick="select('A')" id="nav-A">
+      <div class="tn-badge">A</div>
+      <div class="tn-body"><div class="tn-name">Wayfinding Post</div><div class="tn-ctx">Estate · transition zones</div></div>
+    </div>
+    <div class="tn-item" onclick="select('B')" id="nav-B">
+      <div class="tn-badge">B</div>
+      <div class="tn-body"><div class="tn-name">Threshold Marker</div><div class="tn-ctx">Gateway · bridge</div></div>
+    </div>
+    <div class="tn-item" onclick="select('C')" id="nav-C">
+      <div class="tn-badge">C</div>
+      <div class="tn-body"><div class="tn-name">Path Pulse</div><div class="tn-ctx">Enclosed corridor · forest</div></div>
+    </div>
+    <div class="tn-item" onclick="select('D')" id="nav-D">
+      <div class="tn-badge">D</div>
+      <div class="tn-body"><div class="tn-name">Narrative Post</div><div class="tn-ctx">Midpoint · audio</div></div>
+    </div>
+    <div class="tn-item" onclick="select('E')" id="nav-E">
+      <div class="tn-badge">E</div>
+      <div class="tn-body"><div class="tn-name">Cultural Panel</div><div class="tn-ctx">Historical overlays</div></div>
+    </div>
+    <div class="tn-item" onclick="select('F')" id="nav-F">
+      <div class="tn-badge">F</div>
+      <div class="tn-body"><div class="tn-name">Arrival Counter</div><div class="tn-ctx">Destination · social proof</div></div>
+    </div>
+    <div class="tn-count">Total: 39 units across 5 segments</div>
+  </div>
+
+  <!-- CENTER -->
+  <div class="center-panel" id="centerPanel"></div>
+
+  <!-- RIGHT SPECS -->
+  <div class="specs-panel" id="specsPanel"></div>
+
+</main>
+
+<footer>
+  <div class="f-stat"><div class="f-lab">Type A</div><div class="f-val">11</div><div class="f-unit">Wayfinding Posts</div></div>
+  <div class="f-stat"><div class="f-lab">Type B</div><div class="f-val">4</div><div class="f-unit">Threshold Pylons</div></div>
+  <div class="f-stat"><div class="f-lab">Type C</div><div class="f-val">18</div><div class="f-unit">Path Fixtures</div></div>
+  <div class="f-stat"><div class="f-lab">Type D</div><div class="f-val">1</div><div class="f-unit">Narrative Post</div></div>
+  <div class="f-stat"><div class="f-lab">Type E</div><div class="f-val">4</div><div class="f-unit">Cultural Panels</div></div>
+  <div class="f-stat"><div class="f-lab">Type F</div><div class="f-val">1</div><div class="f-unit">Arrival Counter</div></div>
+</footer>
+
+<script>
+
+const TYPES = {
+  A: {
+    name: "Wayfinding Post",
+    role: "Creates a readable hierarchy of pedestrian paths across open areas with no clear direction. At each junction, the post makes the route legible for the first time — pointing north toward Porschestrasse without requiring a phone.",
+    context: "Open modernist estate (Detmerode, Westhagen). Deployed at path junctions, origin node, and countdown series on the final approach.",
+    beh: [
+      {label:"Trigger distance", val:"4 m — IR thermal"},
+      {label:"Response", val:"LED base glow + display refresh"},
+      {label:"Hold time", val:"30s after last presence"},
+      {label:"Display", val:"Distance · Arrow · Footfall counter"},
+      {label:"Power", val:"20W solar + LiPo, 5-day autonomy"},
+      {label:"Connectivity", val:"LoRa 868MHz · counter sync"}
+    ],
+    timeline: [
+      {t:"0m", d:"User enters 4m radius", active:true},
+      {t:"0.1s", d:"LED base pool ramps on", active:true},
+      {t:"1.2s", d:"E-ink refreshes", active:true},
+      {t:"30s", d:"No presence — ramp off over 10s", active:false}
+    ],
+    specs: [
+      {k:"Height", v:"1,200 mm"},
+      {k:"Section", v:"60 × 60 mm"},
+      {k:"Material", v:"Corten A steel"},
+      {k:"Display", v:"200 × 130 mm e-ink, IP67"},
+      {k:"LED", v:"12 × 3W, 3,000K"},
+      {k:"Sensor", v:"IR thermal, 90°, 4m"},
+      {k:"Power", v:"20W solar + LiPo"},
+      {k:"Total on route", v:"11 units", amber:true}
+    ],
+    placement: [{s:"Seg 1 · Estate", here:true, cnt:"4×A, 2×E"},{s:"Seg 2 · Bridge", here:false, cnt:"2×B"},{s:"Seg 3 · Forest", here:false, cnt:"18×C, 1×D, 1×E"},{s:"Seg 4 · Westhagen", here:true, cnt:"2×A, 1×E"},{s:"Seg 5 · City", here:true, cnt:"5×A, 1×F"}],
+    mats: [{color:"#b08060", name:"Corten A steel", note:"Post"},{color:"#3a3a3a", name:"Anodised aluminium", note:"Cap"},{color:"#1a2a1a", name:"E-ink glass", note:"Display"}],
+    svgId: "svg-A"
+  },
+  B: {
+    name: "Threshold Marker",
+    role: "Creates a deliberate experiential threshold — a moment the user consciously crosses. Transforms the bridge crossing from infrastructure into the start of a journey: the first gate between the estate and the city.",
+    context: "Zusammenrücken Bridge (Braunschweiger Straße). Paired pylons flanking a 4m path width. Audio + light responds to approach, making the crossing audible and visible.",
+    beh: [
+      {label:"Trigger distance", val:"8 m — LiDAR"},
+      {label:"Response", val:"Sequential LED + directional tone"},
+      {label:"Hold time", val:"45s at 40%, then 15% ambient"},
+      {label:"Audio", val:"Low 220Hz tone, 0.8s on approach"},
+      {label:"Power", val:"Mains — bridge infrastructure"},
+      {label:"Connectivity", val:"Ethernet to bridge panel"}
+    ],
+    timeline: [
+      {t:"8m", d:"User approaches — audio tone", active:true},
+      {t:"3m", d:"LED sequence L→R activates", active:true},
+      {t:"+1.5s", d:"LEDs hold at 40%", active:true},
+      {t:"45s", d:"Ramp to 15% ambient hold", active:false}
+    ],
+    specs: [
+      {k:"Pylon height", v:"800 mm"},
+      {k:"Pylon section", v:"80 × 80 mm hollow"},
+      {k:"Span", v:"4,000 mm (path width)"},
+      {k:"Material", v:"Powder-coat steel, RAL 7021"},
+      {k:"LED", v:"600mm strip, 3,000K, per pylon"},
+      {k:"Audio", v:"Directional, 30° down, 300–3,400Hz"},
+      {k:"Sensor", v:"LiDAR, 8m, shared between pair"},
+      {k:"Total on route", v:"2 pairs (4 pylons)", amber:true}
+    ],
+    placement: [{s:"Seg 1 · Estate", here:false, cnt:"4×A, 2×E"},{s:"Seg 2 · Bridge", here:true, cnt:"2×B"},{s:"Seg 3 · Forest", here:false, cnt:"18×C, 1×D, 1×E"},{s:"Seg 4 · Westhagen", here:false, cnt:"2×A, 1×E"},{s:"Seg 5 · City", here:false, cnt:"5×A, 1×F"}],
+    mats: [{color:"#282828", name:"Powder-coat steel, RAL 7021", note:"Pylons"},{color:"#f5a623", name:"LED strip, 3,000K warm white", note:"Inner face"},{color:"#404040", name:"Cast aluminium cap", note:"Sensor housing"}],
+    svgId: "svg-B"
+  },
+  C: {
+    name: "Path Pulse",
+    role: "Makes the walker the centre of a moving pool of light. Solves the enclosed low-light corridor without flooding it — the light is always ahead, never static, always moving with the user. 40m ahead activates; 40m behind fades.",
+    context: "Rothehofer Forst. 110m of enclosed path between Detmerode and Westhagen. Zero upward light pollution, warm spectrum to minimise ecological impact on nocturnal wildlife. Flush to path surface.",
+    beh: [
+      {label:"Trigger", val:"Networked LiDAR position signal"},
+      {label:"Active zone", val:"40m ahead of user"},
+      {label:"Fade zone", val:"40m behind, 5s linear ramp"},
+      {label:"Spacing", v:"Every 6m along path edge"},
+      {label:"Light output", val:"150 lux at path surface"},
+      {label:"Connectivity", val:"RS-485 daisy chain, 500ms update"}
+    ],
+    timeline: [
+      {t:"Continuous", d:"Position signal from master node", active:true},
+      {t:"<50ms", d:"Fixture ahead activates", active:true},
+      {t:"Ongoing", d:"Pool moves with user speed", active:true},
+      {t:"5s", d:"Trailing fixtures ramp off", active:false}
+    ],
+    specs: [
+      {k:"Fixture diameter", v:"100 mm"},
+      {k:"Height above path", v:"18 mm (flush+)"},
+      {k:"Lens", v:"Tempered borosilicate, IP68"},
+      {k:"LED", v:"3W COB, 3,000K, 80°"},
+      {k:"Output", v:"120 lm · 150 lux at surface"},
+      {k:"Rating", v:"IP68, R11 anti-slip"},
+      {k:"Spacing", v:"6 m on centre"},
+      {k:"Total on route", v:"18 units + 1 master", amber:true}
+    ],
+    placement: [{s:"Seg 1 · Estate", here:false, cnt:"4×A, 2×E"},{s:"Seg 2 · Bridge", here:false, cnt:"2×B"},{s:"Seg 3 · Forest", here:true, cnt:"18×C, 1×D, 1×E"},{s:"Seg 4 · Westhagen", here:false, cnt:"2×A, 1×E"},{s:"Seg 5 · City", here:false, cnt:"5×A, 1×F"}],
+    mats: [{color:"#2a2a2a", name:"Black anodised aluminium", note:"Body"},{color:"#e8e8d8", name:"Borosilicate glass lens", note:"IP68, anti-slip"},{color:"#f5a623", name:"COB LED, 3,000K", note:"Warm white"}],
+    svgId: "svg-C"
+  },
+  D: {
+    name: "Narrative Post",
+    role: "The midpoint witness. Delivers a progress update — you are halfway — and a spoken historical account of the landscape the user is crossing. Reframes the forest as designed separation rather than natural obstacle.",
+    context: "Forest midpoint at 1.9 km. The most isolated point of the route. User must be able to stop. Timber material integrates with conservation landscape. Audio is non-intrusive: directional, inaudible beyond 5m.",
+    beh: [
+      {label:"Trigger — display", val:"3 m — LiDAR"},
+      {label:"Trigger — audio", val:"2 m + velocity < 0.5 m/s"},
+      {label:"Audio duration", val:"45s (plays once per approach)"},
+      {label:"Session lock", val:"No repeat within 3 min"},
+      {label:"Display power", val:"E-ink — zero power at rest"},
+      {label:"Power", val:"30W solar, 20Ah LiPo"}
+    ],
+    timeline: [
+      {t:"3m", d:"User enters — display refreshes", active:true},
+      {t:"2m", d:"User slows — 1.5s audio delay", active:true},
+      {t:"+1.5s", d:"Narrative audio begins (45s)", active:true},
+      {t:"90s", d:"No presence — standby", active:false}
+    ],
+    specs: [
+      {k:"Height", v:"1,500 mm"},
+      {k:"Section", v:"100 × 100 mm octagonal"},
+      {k:"Material", v:"Douglas fir / Larch, FSC"},
+      {k:"Treatment", v:"Linseed oil + iron sulphate"},
+      {k:"E-ink panel", v:"250 × 180 mm, IP67"},
+      {k:"Speaker", v:"100mm full-range, downward-facing"},
+      {k:"Sensor", v:"Solid-state LiDAR, 3m radius"},
+      {k:"Total on route", v:"1 unit", amber:true}
+    ],
+    placement: [{s:"Seg 1 · Estate", here:false, cnt:"4×A, 2×E"},{s:"Seg 2 · Bridge", here:false, cnt:"2×B"},{s:"Seg 3 · Forest", here:true, cnt:"18×C, 1×D, 1×E"},{s:"Seg 4 · Westhagen", here:false, cnt:"2×A, 1×E"},{s:"Seg 5 · City", here:false, cnt:"5×A, 1×F"}],
+    mats: [{color:"#7a5030", name:"Douglas fir / Larch, FSC", note:"Post body"},{color:"#4a3820", name:"Iron sulphate treatment", note:"Grey-black weathering"},{color:"#1a2a1a", name:"E-ink, IP67, black bezel", note:"Panel"}],
+    svgId: "svg-D"
+  },
+  E: {
+    name: "Cultural Panel",
+    role: "Makes the hidden visible. Permanent, passive, site-specific. Points to what was always there — a building, a name, a landscape decision — and makes it legible while the user walks. No sensors, no interaction. Present when no one is watching.",
+    context: "Stephanuskirche (Alvar Aalto), Don Camillo and Peppone towers, Rothehofer Forst boundary, Westhagen renewal zone, Mittellandkanal. Each panel is unique to its site. Text in English and German.",
+    beh: [
+      {label:"Active", val:"Always — no presence required"},
+      {label:"LED edge", val:"60% at night, 15% in daylight"},
+      {label:"Dimming", val:"Photocell auto (no user input)"},
+      {label:"Content", val:"Permanent etched text + QR for AR"},
+      {label:"Power", val:"Solar or mains, photocell control"},
+      {label:"Maintenance", val:"None scheduled — 50,000hr LED"}
+    ],
+    timeline: [
+      {t:"Dusk", d:"Photocell dims to 60%", active:true},
+      {t:"Daylight", d:"Dims to 15%", active:true},
+      {t:"Always", d:"Text readable — no power for e-ink", active:true},
+      {t:"QR scan", d:"AR companion opens extended content", active:true}
+    ],
+    specs: [
+      {k:"Panel size", v:"600 × 400 mm (nominal)"},
+      {k:"Material", v:"3mm etched stainless 316"},
+      {k:"Etch depth", v:"0.8 mm — permanent"},
+      {k:"LED edge", v:"8mm strip, 3,000K, perimeter"},
+      {k:"QR code", v:"Etched — links to AR app"},
+      {k:"Mount", v:"E1: wall bracket / E2: 50mm post"},
+      {k:"Power", v:"Low-voltage mains or solar"},
+      {k:"Total on route", v:"4 units (2×E1, 2×E2)", amber:true}
+    ],
+    placement: [{s:"Seg 1 · Estate", here:true, cnt:"4×A, 2×E"},{s:"Seg 2 · Bridge", here:false, cnt:"2×B"},{s:"Seg 3 · Forest", here:true, cnt:"18×C, 1×D, 1×E"},{s:"Seg 4 · Westhagen", here:true, cnt:"2×A, 1×E"},{s:"Seg 5 · City", here:false, cnt:"5×A, 1×F"}],
+    mats: [{color:"#888880", name:"Stainless 316, satin finish", note:"Panel face"},{color:"#c0c0b8", name:"Etched text — 0.8mm depth", note:"Permanent"},{color:"#f5a623", name:"LED edge, 3,000K", note:"Perimeter backlight"}],
+    svgId: "svg-E"
+  },
+  F: {
+    name: "Arrival Counter",
+    role: "The final witness. Acknowledges that the user arrived on foot or by bike. The number — today's aggregate corridor footfall — is social proof: this choice is not solitary. The act of arriving is made legible in the city centre.",
+    context: "Porschestrasse entry point. The moment pedestrians and cyclists transition from the corridor into the city. Scale and presence appropriate for urban density: larger, more prominent, civic in character.",
+    beh: [
+      {label:"Counter update", val:"Every 30 min via LoRa"},
+      {label:"Display", val:"Always visible — e-ink, no power at rest"},
+      {label:"LED border", val:"Activates on 6m approach"},
+      {label:"Hold time", val:"60s after last presence"},
+      {label:"Power", val:"Mains — city centre"},
+      {label:"Network", val:"LoRa receiving from Type A nodes"}
+    ],
+    timeline: [
+      {t:"Midnight", d:"Counter resets — new day", active:true},
+      {t:"Every 30m", d:"Counter updates via LoRa", active:true},
+      {t:"6m", d:"User approaches — LED border ramps", active:true},
+      {t:"60s", d:"No presence — border ramps off", active:false}
+    ],
+    specs: [
+      {k:"Display", v:"500 × 350 mm e-ink"},
+      {k:"Plinth", v:"500 × 200 mm footprint, 900 mm tall"},
+      {k:"Material", v:"Poured concrete + aluminium surround"},
+      {k:"LED border", v:"25 mm, 3,000K, perimeter"},
+      {k:"Sensor", v:"LiDAR, 6m radius"},
+      {k:"Power", v:"Mains — 230V"},
+      {k:"Network", v:"LoRa receiving from corridor nodes"},
+      {k:"Total on route", v:"1 unit", amber:true}
+    ],
+    placement: [{s:"Seg 1 · Estate", here:false, cnt:"4×A, 2×E"},{s:"Seg 2 · Bridge", here:false, cnt:"2×B"},{s:"Seg 3 · Forest", here:false, cnt:"18×C, 1×D, 1×E"},{s:"Seg 4 · Westhagen", here:false, cnt:"2×A, 1×E"},{s:"Seg 5 · City", here:true, cnt:"5×A, 1×F"}],
+    mats: [{color:"#909090", name:"Poured concrete base", note:"Plinth"},{color:"#1a1a2a", name:"E-ink display module", note:"Face"},{color:"#f5a623", name:"LED border, 3,000K", note:"25mm perimeter"}],
+    svgId: "svg-F"
+  }
+};
+
+// ── SVG SCHEMATICS ───────────────────────────────────────────────────────────
+
+function svgA() {
+  return `<svg viewBox="0 0 440 340" xmlns="http://www.w3.org/2000/svg" style="height:320px">
+    <defs>
+      <radialGradient id="agA" cx="50%" cy="100%" r="50%">
+        <stop offset="0%" stop-color="#f5a623" stop-opacity=".45"/>
+        <stop offset="100%" stop-color="#f5a623" stop-opacity="0"/>
+      </radialGradient>
+      <filter id="glA"><feGaussianBlur stdDeviation="3"/></filter>
+    </defs>
+    <!-- Ground -->
+    <rect x="0" y="278" width="440" height="62" fill="#0e0e1a"/>
+    <!-- Path surface -->
+    <rect x="120" y="270" width="200" height="12" fill="#141428" rx="1"/>
+    <line x1="120" y1="282" x2="320" y2="282" stroke="#1c1c2e" stroke-width=".5"/>
+    <!-- LED glow -->
+    <ellipse cx="220" cy="275" rx="70" ry="18" fill="url(#agA)" filter="url(#glA)"/>
+    <!-- LED base ring -->
+    <ellipse cx="220" cy="273" rx="22" ry="5" fill="none" stroke="#f5a623" stroke-width=".8" stroke-opacity=".5"/>
+    <!-- Post body (Corten) -->
+    <rect x="217" y="162" width="6" height="110" fill="#b08060" rx=".5"/>
+    <rect x="218" y="162" width="2" height="110" fill="#c09070" opacity=".4"/>
+    <!-- Sensor cap -->
+    <ellipse cx="220" cy="159" rx="9" ry="5" fill="#505050"/>
+    <ellipse cx="220" cy="156" rx="6" ry="3" fill="#3a3a3a"/>
+    <circle cx="220" cy="155" r="2.5" fill="#e05252" opacity=".9"/>
+    <!-- IR detection cone (dashed) -->
+    <path d="M220 158 L188 272 L252 272" fill="rgba(245,166,35,.04)" stroke="rgba(245,166,35,.15)" stroke-width=".5" stroke-dasharray="4,3"/>
+    <!-- E-ink panel -->
+    <rect x="225" y="196" width="48" height="34" fill="#0d1f0d" stroke="#4adb6e" stroke-width=".6" rx="1.5"/>
+    <!-- Panel content: distance -->
+    <text x="249" y="209" font-size="6.5" fill="#4adb6e" text-anchor="middle" font-family="'SF Mono',monospace" letter-spacing=".05em">3.8 KM</text>
+    <!-- Panel arrow -->
+    <polygon points="246,218 250,213 254,218" fill="#f5a623"/>
+    <!-- Panel counter -->
+    <text x="249" y="226" font-size="5.5" fill="#484868" text-anchor="middle" font-family="'SF Mono',monospace">247 today</text>
+    <!-- Base plate -->
+    <rect x="208" y="272" width="24" height="3" fill="#909060" rx=".5"/>
+    <!-- Dimension: height -->
+    <line x1="196" y1="162" x2="196" y2="272" stroke="#484868" stroke-width=".5" stroke-dasharray="3,2"/>
+    <line x1="192" y1="162" x2="200" y2="162" stroke="#484868" stroke-width=".5"/>
+    <line x1="192" y1="272" x2="200" y2="272" stroke="#484868" stroke-width=".5"/>
+    <text x="182" y="218" font-size="7" fill="#484868" text-anchor="middle" transform="rotate(-90,182,218)">1200 mm</text>
+    <!-- Dimension: section -->
+    <line x1="217" y1="148" x2="223" y2="148" stroke="#484868" stroke-width=".5"/>
+    <line x1="217" y1="144" x2="217" y2="152" stroke="#484868" stroke-width=".5"/>
+    <line x1="223" y1="144" x2="223" y2="152" stroke="#484868" stroke-width=".5"/>
+    <text x="220" y="140" font-size="7" fill="#484868" text-anchor="middle">60mm</text>
+    <!-- Callout lines -->
+    <line x1="229" y1="158" x2="268" y2="140" stroke="#302030" stroke-width=".6"/>
+    <text x="270" y="138" font-size="8" fill="#b0b0cc" font-family="'Helvetica Neue',Arial,sans-serif">IR thermal sensor</text>
+    <line x1="272" y1="210" x2="275" y2="210" stroke="#302030" stroke-width=".6"/>
+    <text x="276" y="203" font-size="8" fill="#b0b0cc" font-family="'Helvetica Neue',Arial,sans-serif">e-ink display</text>
+    <text x="276" y="213" font-size="7" fill="#484868" font-family="'Helvetica Neue',Arial,sans-serif">200×130 mm · IP67</text>
+    <line x1="218" y1="200" x2="210" y2="190" stroke="#302030" stroke-width=".6"/>
+    <text x="140" y="188" font-size="8" fill="#b0b0cc" font-family="'Helvetica Neue',Arial,sans-serif">Corten A · 60×60</text>
+    <line x1="219" y1="275" x2="210" y2="296" stroke="#302030" stroke-width=".6"/>
+    <text x="155" y="295" font-size="8" fill="#f5a623" font-family="'Helvetica Neue',Arial,sans-serif">LED 3000K · ground pool</text>
+    <!-- Solar cell callout -->
+    <rect x="213" y="151" width="14" height="4" fill="none" stroke="#5a9abf" stroke-width=".5" stroke-dasharray="2,1"/>
+    <text x="160" y="158" font-size="7.5" fill="#5a9abf" font-family="'Helvetica Neue',Arial,sans-serif">solar cell</text>
+    <line x1="213" y1="153" x2="200" y2="157" stroke="#5a9abf" stroke-width=".5" opacity=".6"/>
+    <!-- Scale bar -->
+    <line x1="340" y1="310" x2="410" y2="310" stroke="#484868" stroke-width=".8"/>
+    <line x1="340" y1="306" x2="340" y2="314" stroke="#484868" stroke-width=".8"/>
+    <line x1="410" y1="306" x2="410" y2="314" stroke="#484868" stroke-width=".8"/>
+    <text x="375" y="324" font-size="7" fill="#484868" text-anchor="middle" font-family="'Helvetica Neue',Arial,sans-serif">Scale 1:14 approx</text>
+  </svg>`;
+}
+
+function svgB() {
+  return `<svg viewBox="0 0 440 300" xmlns="http://www.w3.org/2000/svg" style="height:280px">
+    <defs>
+      <linearGradient id="ledLB" x1="0%" y1="0%" x2="0%" y2="100%">
+        <stop offset="0%" stop-color="#f5a623" stop-opacity=".9"/>
+        <stop offset="100%" stop-color="#f5a623" stop-opacity=".15"/>
+      </linearGradient>
+      <linearGradient id="ledRB" x1="0%" y1="0%" x2="0%" y2="100%">
+        <stop offset="0%" stop-color="#f5a623" stop-opacity=".9"/>
+        <stop offset="100%" stop-color="#f5a623" stop-opacity=".15"/>
+      </linearGradient>
+      <radialGradient id="zoneB" cx="50%" cy="100%" r="60%">
+        <stop offset="0%" stop-color="#f5a623" stop-opacity=".08"/>
+        <stop offset="100%" stop-color="#f5a623" stop-opacity="0"/>
+      </radialGradient>
+      <filter id="glB"><feGaussianBlur stdDeviation="4"/></filter>
+    </defs>
+    <!-- Ground -->
+    <rect x="0" y="230" width="440" height="70" fill="#0e0e1a"/>
+    <!-- Path surface -->
+    <rect x="95" y="222" width="250" height="12" fill="#141428" rx="1"/>
+    <!-- Path dashed centre line -->
+    <line x1="95" y1="228" x2="345" y2="228" stroke="#1c1c2e" stroke-width="1" stroke-dasharray="8,6"/>
+    <!-- Activation zone glow -->
+    <rect x="110" y="160" width="220" height="72" fill="url(#zoneB)" filter="url(#glB)"/>
+    <!-- Left pylon -->
+    <rect x="108" y="160" width="10" height="72" fill="#383838" rx="1"/>
+    <rect x="108" y="160" width="3" height="72" fill="url(#ledLB)" rx=".5"/>
+    <!-- Right pylon -->
+    <rect x="322" y="160" width="10" height="72" fill="#383838" rx="1"/>
+    <rect x="329" y="160" width="3" height="72" fill="url(#ledRB)" rx=".5"/>
+    <!-- LiDAR cap left -->
+    <rect x="107" y="154" width="12" height="8" fill="#2a2a2a" rx="2"/>
+    <circle cx="113" cy="157" r="2.5" fill="#e05252" opacity=".9"/>
+    <!-- Approach zone dashed (8m simplified) -->
+    <ellipse cx="220" cy="228" rx="145" ry="30" fill="none" stroke="rgba(245,166,35,.2)" stroke-width=".7" stroke-dasharray="5,4"/>
+    <text x="370" y="225" font-size="7.5" fill="rgba(245,166,35,.5)" font-family="'Helvetica Neue',Arial,sans-serif">8m zone</text>
+    <!-- Audio emitter in ground -->
+    <ellipse cx="220" cy="228" rx="8" ry="4" fill="#252535" stroke="#f5a623" stroke-width=".6" stroke-opacity=".6"/>
+    <!-- Audio waves -->
+    <path d="M205 215 Q200 210 205 205" fill="none" stroke="rgba(245,166,35,.4)" stroke-width="1.5" stroke-linecap="round"/>
+    <path d="M200 220 Q192 210 200 200" fill="none" stroke="rgba(245,166,35,.3)" stroke-width="1.5" stroke-linecap="round"/>
+    <path d="M235 215 Q240 210 235 205" fill="none" stroke="rgba(245,166,35,.4)" stroke-width="1.5" stroke-linecap="round"/>
+    <path d="M240 220 Q248 210 240 200" fill="none" stroke="rgba(245,166,35,.3)" stroke-width="1.5" stroke-linecap="round"/>
+    <!-- Dimension: pylon height -->
+    <line x1="88" y1="160" x2="88" y2="232" stroke="#484868" stroke-width=".5" stroke-dasharray="3,2"/>
+    <line x1="84" y1="160" x2="92" y2="160" stroke="#484868" stroke-width=".5"/>
+    <line x1="84" y1="232" x2="92" y2="232" stroke="#484868" stroke-width=".5"/>
+    <text x="76" y="198" font-size="7" fill="#484868" text-anchor="middle" transform="rotate(-90,76,198)">800 mm</text>
+    <!-- Dimension: span -->
+    <line x1="118" y1="248" x2="322" y2="248" stroke="#484868" stroke-width=".5" stroke-dasharray="3,2"/>
+    <line x1="118" y1="244" x2="118" y2="252" stroke="#484868" stroke-width=".5"/>
+    <line x1="322" y1="244" x2="322" y2="252" stroke="#484868" stroke-width=".5"/>
+    <text x="220" y="262" font-size="7.5" fill="#484868" text-anchor="middle" font-family="'Helvetica Neue',Arial,sans-serif">4,000 mm (path width)</text>
+    <!-- Callout: LiDAR -->
+    <line x1="113" y1="155" x2="113" y2="130" stroke="#302030" stroke-width=".6"/>
+    <text x="76" y="128" font-size="8" fill="#b0b0cc" font-family="'Helvetica Neue',Arial,sans-serif">LiDAR sensor</text>
+    <!-- Callout: LED strip -->
+    <line x1="108" y1="195" x2="80" y2="185" stroke="#302030" stroke-width=".6"/>
+    <text x="18" y="184" font-size="8" fill="#f5a623" font-family="'Helvetica Neue',Arial,sans-serif">LED strip</text>
+    <text x="18" y="194" font-size="7" fill="#484868" font-family="'Helvetica Neue',Arial,sans-serif">600mm · inner face</text>
+    <!-- Callout: pylon -->
+    <line x1="332" y1="196" x2="350" y2="185" stroke="#302030" stroke-width=".6"/>
+    <text x="353" y="184" font-size="8" fill="#b0b0cc" font-family="'Helvetica Neue',Arial,sans-serif">Powder-coat steel</text>
+    <text x="353" y="194" font-size="7" fill="#484868" font-family="'Helvetica Neue',Arial,sans-serif">RAL 7021 · 80×80mm</text>
+    <!-- Callout: audio -->
+    <line x1="228" y1="228" x2="260" y2="270" stroke="#302030" stroke-width=".6"/>
+    <text x="262" y="270" font-size="8" fill="#b0b0cc" font-family="'Helvetica Neue',Arial,sans-serif">Directional audio</text>
+    <text x="262" y="280" font-size="7" fill="#484868" font-family="'Helvetica Neue',Arial,sans-serif">220Hz · 0.8s · on approach</text>
+    <!-- Scale -->
+    <line x1="350" y1="290" x2="410" y2="290" stroke="#484868" stroke-width=".8"/>
+    <text x="380" y="300" font-size="7" fill="#484868" text-anchor="middle" font-family="'Helvetica Neue',Arial,sans-serif">Scale 1:16</text>
+  </svg>`;
+}
+
+function svgC() {
+  return `<svg viewBox="0 0 440 260" xmlns="http://www.w3.org/2000/svg" style="height:230px">
+    <defs>
+      <radialGradient id="fx1" cx="50%" cy="100%" r="80%">
+        <stop offset="0%" stop-color="#f5a623" stop-opacity=".55"/>
+        <stop offset="100%" stop-color="#f5a623" stop-opacity="0"/>
+      </radialGradient>
+      <radialGradient id="fx2" cx="50%" cy="100%" r="80%">
+        <stop offset="0%" stop-color="#f5a623" stop-opacity=".35"/>
+        <stop offset="100%" stop-color="#f5a623" stop-opacity="0"/>
+      </radialGradient>
+      <radialGradient id="fx3" cx="50%" cy="100%" r="80%">
+        <stop offset="0%" stop-color="#f5a623" stop-opacity=".15"/>
+        <stop offset="100%" stop-color="#f5a623" stop-opacity="0"/>
+      </radialGradient>
+      <filter id="glC"><feGaussianBlur stdDeviation="5"/></filter>
+    </defs>
+    <!-- Path surface (cross-section / plan view) -->
+    <rect x="30" y="80" width="380" height="100" fill="#141428" rx="2"/>
+    <rect x="30" y="80" width="380" height="6" fill="#1e1e38"/>
+    <rect x="30" y="174" width="380" height="6" fill="#1e1e38"/>
+    <!-- Path centre -->
+    <line x1="30" y1="130" x2="410" y2="130" stroke="#1c1c2e" stroke-width="1" stroke-dasharray="10,8"/>
+    <!-- Ground (above path — plan view) -->
+    <rect x="0" y="0" width="440" height="80" fill="#0b100c"/>
+    <rect x="0" y="180" width="440" height="80" fill="#0b100c"/>
+    <!-- Tree/ground texture at edges -->
+    <rect x="0" y="0" width="30" height="260" fill="#0e1a10"/>
+    <rect x="410" y="0" width="30" height="260" fill="#0e1a10"/>
+    <!-- Fixtures in path (plan view — circles at edge) -->
+    <!-- Active fixtures (40m ahead zone — shown as bright) -->
+    <circle cx="240" cy="86" r="5" fill="#f5a623"/>
+    <circle cx="240" cy="86" r="9" fill="url(#fx1)" filter="url(#glC)"/>
+    <circle cx="280" cy="86" r="5" fill="#f5a623"/>
+    <circle cx="280" cy="86" r="9" fill="url(#fx1)" filter="url(#glC)"/>
+    <circle cx="320" cy="86" r="5" fill="#f5a623"/>
+    <circle cx="320" cy="86" r="9" fill="url(#fx1)" filter="url(#glC)"/>
+    <circle cx="360" cy="86" r="4" fill="#d08020"/>
+    <circle cx="360" cy="86" r="8" fill="url(#fx2)" filter="url(#glC)"/>
+    <!-- User fixture (current position) -->
+    <circle cx="200" cy="86" r="5" fill="#f5a623"/>
+    <!-- Fading fixtures (behind) -->
+    <circle cx="160" cy="86" r="4" fill="#c07010"/>
+    <circle cx="120" cy="86" r="3" fill="#805010"/>
+    <circle cx="80" cy="86" r="2.5" fill="#403020"/>
+    <!-- Inactive fixture -->
+    <circle cx="40" cy="86" r="2" fill="#252535"/>
+    <!-- User position indicator -->
+    <circle cx="200" cy="130" r="7" fill="none" stroke="rgba(255,255,255,.5)" stroke-width="1.5"/>
+    <polygon points="200,118 195,128 205,128" fill="white" opacity=".7"/>
+    <!-- 40m ahead zone label -->
+    <rect x="204" y="56" width="168" height="18" fill="rgba(245,166,35,.06)" rx="2" stroke="rgba(245,166,35,.2)" stroke-width=".5"/>
+    <text x="288" y="69" font-size="8" fill="rgba(245,166,35,.7)" text-anchor="middle" font-family="'Helvetica Neue',Arial,sans-serif" letter-spacing=".05em">← 40m active zone →</text>
+    <!-- 40m behind label -->
+    <rect x="60" y="56" width="134" height="18" fill="rgba(255,255,255,.02)" rx="2" stroke="#1c1c2e" stroke-width=".5"/>
+    <text x="127" y="69" font-size="8" fill="#484868" text-anchor="middle" font-family="'Helvetica Neue',Arial,sans-serif">← fading zone →</text>
+    <!-- Callout: fixture detail -->
+    <line x1="240" y1="82" x2="240" y2="38" stroke="#302030" stroke-width=".6"/>
+    <text x="244" y="36" font-size="8" fill="#b0b0cc" font-family="'Helvetica Neue',Arial,sans-serif">100mm flush fixture · IP68</text>
+    <text x="244" y="26" font-size="7.5" fill="#f5a623" font-family="'Helvetica Neue',Arial,sans-serif">3W COB · 3,000K · 150 lux</text>
+    <!-- Spacing dimension -->
+    <line x1="240" y1="210" x2="280" y2="210" stroke="#484868" stroke-width=".6" stroke-dasharray="2,2"/>
+    <line x1="240" y1="206" x2="240" y2="214" stroke="#484868" stroke-width=".6"/>
+    <line x1="280" y1="206" x2="280" y2="214" stroke="#484868" stroke-width=".6"/>
+    <text x="260" y="228" font-size="7.5" fill="#484868" text-anchor="middle" font-family="'Helvetica Neue',Arial,sans-serif">6 m spacing</text>
+    <!-- Path width -->
+    <line x1="14" y1="86" x2="14" y2="174" stroke="#484868" stroke-width=".5" stroke-dasharray="3,2"/>
+    <text x="7" y="132" font-size="7" fill="#484868" text-anchor="middle" transform="rotate(-90,7,132)">path ~3m</text>
+    <!-- Plan view label -->
+    <text x="385" y="250" font-size="7.5" fill="#484868" font-family="'Helvetica Neue',Arial,sans-serif" text-anchor="end">Plan view (top-down)</text>
+  </svg>`;
+}
+
+function svgD() {
+  return `<svg viewBox="0 0 440 360" xmlns="http://www.w3.org/2000/svg" style="height:340px">
+    <defs>
+      <radialGradient id="agD" cx="50%" cy="100%" r="50%">
+        <stop offset="0%" stop-color="#f5a623" stop-opacity=".3"/>
+        <stop offset="100%" stop-color="#f5a623" stop-opacity="0"/>
+      </radialGradient>
+      <radialGradient id="trigD" cx="50%" cy="50%" r="50%">
+        <stop offset="0%" stop-color="#5a9abf" stop-opacity=".08"/>
+        <stop offset="100%" stop-color="#5a9abf" stop-opacity="0"/>
+      </radialGradient>
+      <filter id="glD"><feGaussianBlur stdDeviation="4"/></filter>
+    </defs>
+    <!-- Forest floor -->
+    <rect x="0" y="298" width="440" height="62" fill="#080f0a"/>
+    <!-- Ground surface -->
+    <rect x="100" y="290" width="240" height="12" fill="#10180c" rx="1"/>
+    <!-- Forest sides -->
+    <rect x="0" y="0" width="100" height="360" fill="#060d08"/>
+    <rect x="340" y="0" width="100" height="360" fill="#060d08"/>
+    <!-- Subtle forest detail -->
+    <line x1="40" y1="0" x2="40" y2="360" stroke="#0a140c" stroke-width="20"/>
+    <line x1="70" y1="0" x2="70" y2="360" stroke="#0a140c" stroke-width="12"/>
+    <line x1="370" y1="0" x2="370" y2="360" stroke="#0a140c" stroke-width="15"/>
+    <line x1="400" y1="0" x2="400" y2="360" stroke="#0a140c" stroke-width="10"/>
+    <!-- LiDAR trigger zone (3m radius) -->
+    <ellipse cx="220" cy="295" rx="90" ry="30" fill="url(#trigD)" filter="url(#glD)"/>
+    <ellipse cx="220" cy="295" rx="90" ry="30" fill="none" stroke="rgba(90,154,191,.2)" stroke-width=".8" stroke-dasharray="5,4"/>
+    <text x="310" y="285" font-size="7.5" fill="rgba(90,154,191,.5)" font-family="'Helvetica Neue',Arial,sans-serif">3m trigger zone</text>
+    <!-- Small glow at base -->
+    <ellipse cx="220" cy="295" rx="30" ry="8" fill="url(#agD)" filter="url(#glD)"/>
+    <!-- Timber post body -->
+    <rect x="215" y="148" width="10" height="145" fill="#7a5030"/>
+    <rect x="216" y="148" width="3" height="145" fill="#8a6040" opacity=".5"/>
+    <!-- Octagonal hint (chamfer) -->
+    <polygon points="215,148 225,148 227,151 227,290 213,290 213,151" fill="#7a5030" opacity=".3"/>
+    <!-- LiDAR ring at 800mm -->
+    <rect x="212" y="226" width="16" height="8" fill="#252530" rx="2"/>
+    <circle cx="220" cy="230" r="2.5" fill="#e05252" opacity=".8"/>
+    <!-- E-ink panel (left side at 800-1100mm) -->
+    <rect x="168" y="196" width="46" height="38" fill="#0d1a0d" stroke="#4adb6e" stroke-width=".6" rx="2"/>
+    <line x1="168" y1="214" x2="168" y2="214" stroke="none"/>
+    <!-- Panel text lines -->
+    <text x="191" y="208" font-size="5.5" fill="#4adb6e" text-anchor="middle" font-family="'SF Mono',monospace">HALFWAY</text>
+    <text x="191" y="217" font-size="5" fill="#b0b0cc" text-anchor="middle" font-family="'SF Mono',monospace">1.9 km walked</text>
+    <text x="191" y="226" font-size="5" fill="#f5a623" text-anchor="middle" font-family="'SF Mono',monospace">19 min to centre</text>
+    <!-- Panel connector to post -->
+    <rect x="214" y="204" width="4" height="4" fill="#5a4020"/>
+    <!-- Speaker at top (downward-facing) -->
+    <rect x="212" y="140" width="16" height="10" fill="#303030" rx="2"/>
+    <line x1="214" y1="142" x2="226" y2="142" stroke="#484868" stroke-width=".5"/>
+    <line x1="214" y1="145" x2="226" y2="145" stroke="#484868" stroke-width=".5"/>
+    <line x1="214" y1="148" x2="226" y2="148" stroke="#484868" stroke-width=".5"/>
+    <!-- Sound waves -->
+    <path d="M205 144 Q196 138 205 132" fill="none" stroke="rgba(245,166,35,.4)" stroke-width="1.5" stroke-linecap="round"/>
+    <path d="M200 147 Q186 138 200 129" fill="none" stroke="rgba(245,166,35,.25)" stroke-width="1.5" stroke-linecap="round"/>
+    <path d="M235 144 Q244 138 235 132" fill="none" stroke="rgba(245,166,35,.4)" stroke-width="1.5" stroke-linecap="round"/>
+    <path d="M240 147 Q254 138 240 129" fill="none" stroke="rgba(245,166,35,.25)" stroke-width="1.5" stroke-linecap="round"/>
+    <!-- Dimension: height -->
+    <line x1="256" y1="148" x2="256" y2="290" stroke="#484868" stroke-width=".5" stroke-dasharray="3,2"/>
+    <line x1="252" y1="148" x2="260" y2="148" stroke="#484868" stroke-width=".5"/>
+    <line x1="252" y1="290" x2="260" y2="290" stroke="#484868" stroke-width=".5"/>
+    <text x="270" y="220" font-size="7" fill="#484868" transform="rotate(90,270,220)" text-anchor="middle">1500 mm</text>
+    <!-- Callout: speaker -->
+    <line x1="220" y1="140" x2="220" y2="110" stroke="#302030" stroke-width=".6"/>
+    <line x1="220" y1="110" x2="170" y2="110" stroke="#302030" stroke-width=".6"/>
+    <text x="105" y="108" font-size="8" fill="#b0b0cc" font-family="'Helvetica Neue',Arial,sans-serif">Directional speaker</text>
+    <text x="105" y="118" font-size="7" fill="#484868" font-family="'Helvetica Neue',Arial,sans-serif">100mm · downward 30°</text>
+    <!-- Callout: e-ink -->
+    <line x1="168" y1="215" x2="148" y2="215" stroke="#302030" stroke-width=".6"/>
+    <text x="100" y="210" font-size="8" fill="#b0b0cc" font-family="'Helvetica Neue',Arial,sans-serif">E-ink · IP67</text>
+    <text x="100" y="220" font-size="7" fill="#484868" font-family="'Helvetica Neue',Arial,sans-serif">250×180 mm</text>
+    <!-- Callout: LiDAR -->
+    <line x1="228" y1="230" x2="268" y2="230" stroke="#302030" stroke-width=".6"/>
+    <text x="270" y="228" font-size="8" fill="#b0b0cc" font-family="'Helvetica Neue',Arial,sans-serif">LiDAR · 3m</text>
+    <!-- Callout: timber -->
+    <line x1="225" y1="260" x2="265" y2="260" stroke="#302030" stroke-width=".6"/>
+    <text x="267" y="258" font-size="8" fill="#b0b0cc" font-family="'Helvetica Neue',Arial,sans-serif">Douglas fir · FSC</text>
+    <text x="267" y="268" font-size="7" fill="#484868" font-family="'Helvetica Neue',Arial,sans-serif">Linseed + iron sulphate</text>
+    <line x1="340" y1="330" x2="410" y2="330" stroke="#484868" stroke-width=".8"/>
+    <text x="375" y="344" font-size="7" fill="#484868" text-anchor="middle" font-family="'Helvetica Neue',Arial,sans-serif">Scale 1:14</text>
+  </svg>`;
+}
+
+function svgE() {
+  return `<svg viewBox="0 0 440 280" xmlns="http://www.w3.org/2000/svg" style="height:260px">
+    <defs>
+      <filter id="glE"><feGaussianBlur stdDeviation="6"/></filter>
+    </defs>
+    <!-- Wall (for E1 wall-mount variant) -->
+    <rect x="0" y="0" width="440" height="80" fill="#0c0c18"/>
+    <rect x="0" y="76" width="440" height="4" fill="#1a1a2a"/>
+    <!-- Ground -->
+    <rect x="0" y="230" width="440" height="50" fill="#0e0e1a"/>
+    <rect x="80" y="222" width="280" height="12" fill="#141428" rx="1"/>
+    <!-- Backlight glow -->
+    <rect x="95" y="90" width="250" height="168" rx="4" fill="#f5a623" opacity=".12" filter="url(#glE)"/>
+    <!-- Panel face: stainless -->
+    <rect x="100" y="95" width="240" height="160" fill="#1a1a22" stroke="#404040" stroke-width="1.2" rx="3"/>
+    <!-- LED edge strip -->
+    <rect x="100" y="95" width="240" height="3" fill="#f5a623" opacity=".6" rx="2"/>
+    <rect x="100" y="252" width="240" height="3" fill="#f5a623" opacity=".6" rx="2"/>
+    <rect x="100" y="95" width="3" height="160" fill="#f5a623" opacity=".6" rx="2"/>
+    <rect x="337" y="95" width="3" height="160" fill="#f5a623" opacity=".6" rx="2"/>
+    <!-- Etched text (simulated) -->
+    <text x="220" y="125" font-size="10" fill="#888880" text-anchor="middle" font-family="'Helvetica Neue',Arial,sans-serif" font-weight="300" letter-spacing=".06em">DESIGNED BY ALVAR AALTO</text>
+    <text x="220" y="139" font-size="9" fill="#606058" text-anchor="middle" font-family="'Helvetica Neue',Arial,sans-serif" font-weight="300">1963–1968 · Stephanuskirche</text>
+    <line x1="120" y1="150" x2="320" y2="150" stroke="#303030" stroke-width=".5"/>
+    <text x="220" y="168" font-size="9.5" fill="#908888" text-anchor="middle" font-family="'Helvetica Neue',Arial,sans-serif" font-style="italic" font-weight="300">One of three buildings Aalto made in</text>
+    <text x="220" y="181" font-size="9.5" fill="#908888" text-anchor="middle" font-family="'Helvetica Neue',Arial,sans-serif" font-style="italic" font-weight="300">Wolfsburg — more than in any city outside</text>
+    <text x="220" y="194" font-size="9.5" fill="#908888" text-anchor="middle" font-family="'Helvetica Neue',Arial,sans-serif" font-style="italic" font-weight="300">Finland. The ceiling holds nineteen</text>
+    <text x="220" y="207" font-size="9.5" fill="#908888" text-anchor="middle" font-family="'Helvetica Neue',Arial,sans-serif" font-style="italic" font-weight="300">floating discs.</text>
+    <!-- QR code (top right corner) -->
+    <rect x="314" y="102" width="20" height="20" fill="none" stroke="#585850" stroke-width=".8" rx="1"/>
+    <rect x="316" y="104" width="5" height="5" fill="#585850"/>
+    <rect x="327" y="104" width="5" height="5" fill="#585850"/>
+    <rect x="316" y="115" width="5" height="5" fill="#585850"/>
+    <rect x="322" y="110" width="3" height="3" fill="#585850"/>
+    <rect x="327" y="115" width="5" height="5" fill="#585850"/>
+    <!-- Photocell (top left) -->
+    <circle cx="114" cy="108" r="4" fill="#252530" stroke="#404048" stroke-width=".6"/>
+    <circle cx="114" cy="108" r="2" fill="#303038"/>
+    <!-- Wall bracket (E1) -->
+    <rect x="170" y="252" width="12" height="20" fill="#303040" rx="1"/>
+    <rect x="258" y="252" width="12" height="20" fill="#303040" rx="1"/>
+    <!-- Callouts -->
+    <line x1="100" y1="172" x2="72" y2="172" stroke="#302030" stroke-width=".6"/>
+    <text x="12" y="168" font-size="8" fill="#b0b0cc" font-family="'Helvetica Neue',Arial,sans-serif">316 stainless</text>
+    <text x="12" y="178" font-size="7" fill="#484868" font-family="'Helvetica Neue',Arial,sans-serif">Chemically etched</text>
+    <text x="12" y="188" font-size="7" fill="#484868" font-family="'Helvetica Neue',Arial,sans-serif">0.8 mm depth</text>
+    <line x1="340" y1="95" x2="370" y2="75" stroke="#302030" stroke-width=".6"/>
+    <text x="372" y="73" font-size="8" fill="#f5a623" font-family="'Helvetica Neue',Arial,sans-serif">LED edge · 3,000K</text>
+    <line x1="334" y1="107" x2="370" y2="100" stroke="#302030" stroke-width=".6"/>
+    <text x="372" y="98" font-size="8" fill="#b0b0cc" font-family="'Helvetica Neue',Arial,sans-serif">QR — AR app link</text>
+    <line x1="114" y1="112" x2="95" y2="130" stroke="#302030" stroke-width=".6"/>
+    <line x1="95" y1="130" x2="72" y2="130" stroke="#302030" stroke-width=".6"/>
+    <text x="12" y="128" font-size="8" fill="#5a9abf" font-family="'Helvetica Neue',Arial,sans-serif">Photocell dimming</text>
+    <!-- Dimension panel -->
+    <line x1="100" y1="270" x2="340" y2="270" stroke="#484868" stroke-width=".5" stroke-dasharray="3,2"/>
+    <line x1="100" y1="266" x2="100" y2="274" stroke="#484868" stroke-width=".5"/>
+    <line x1="340" y1="266" x2="340" y2="274" stroke="#484868" stroke-width=".5"/>
+    <text x="220" y="280" font-size="7.5" fill="#484868" text-anchor="middle" font-family="'Helvetica Neue',Arial,sans-serif">600 mm (nominal · site-dependent)</text>
+  </svg>`;
+}
+
+function svgF() {
+  return `<svg viewBox="0 0 440 300" xmlns="http://www.w3.org/2000/svg" style="height:280px">
+    <defs>
+      <radialGradient id="agF" cx="50%" cy="100%" r="60%">
+        <stop offset="0%" stop-color="#f5a623" stop-opacity=".3"/>
+        <stop offset="100%" stop-color="#f5a623" stop-opacity="0"/>
+      </radialGradient>
+      <filter id="glF"><feGaussianBlur stdDeviation="5"/></filter>
+    </defs>
+    <!-- City ground -->
+    <rect x="0" y="238" width="440" height="62" fill="#0e0e1a"/>
+    <rect x="0" y="230" width="440" height="12" fill="#141428"/>
+    <!-- Approach zone glow -->
+    <ellipse cx="220" cy="238" rx="160" ry="30" fill="url(#agF)" filter="url(#glF)"/>
+    <!-- Plinth body (concrete) -->
+    <rect x="170" y="170" width="100" height="68" fill="#1a1a28" stroke="#282838" stroke-width="1" rx="2"/>
+    <rect x="170" y="170" width="100" height="5" fill="#222232"/>
+    <!-- Display border glow -->
+    <rect x="163" y="82" width="114" height="90" rx="4" fill="#f5a623" opacity=".18" filter="url(#glF)"/>
+    <!-- Display face (e-ink) -->
+    <rect x="168" y="86" width="104" height="82" fill="#0a0a14" stroke="#2a2a3a" stroke-width="1.2" rx="3"/>
+    <!-- LED border strip (amber) -->
+    <rect x="168" y="86" width="104" height="3" fill="#f5a623" opacity=".8" rx="1.5"/>
+    <rect x="168" y="165" width="104" height="3" fill="#f5a623" opacity=".8" rx="1.5"/>
+    <rect x="168" y="86" width="3" height="82" fill="#f5a623" opacity=".8" rx="1.5"/>
+    <rect x="269" y="86" width="3" height="82" fill="#f5a623" opacity=".8" rx="1.5"/>
+    <!-- Counter number -->
+    <text x="220" y="127" font-size="30" fill="#e4e4f0" text-anchor="middle" font-family="'Helvetica Neue',Arial,sans-serif" font-weight="200" letter-spacing="-.05em">1,847</text>
+    <!-- Counter subtext -->
+    <text x="220" y="142" font-size="6" fill="#b0b0cc" text-anchor="middle" font-family="'Helvetica Neue',Arial,sans-serif" letter-spacing=".04em">PEOPLE WALKED OR CYCLED TODAY</text>
+    <text x="220" y="155" font-size="6.5" fill="#f5a623" text-anchor="middle" font-family="'Helvetica Neue',Arial,sans-serif" font-weight="300" font-style="italic">You are one of them.</text>
+    <!-- LiDAR on plinth top -->
+    <rect x="214" y="167" width="12" height="5" fill="#252530" rx="2"/>
+    <circle cx="220" cy="170" r="2" fill="#e05252" opacity=".8"/>
+    <!-- Approaching user silhouettes -->
+    <g opacity=".5">
+      <circle cx="80" cy="232" r="5" fill="#b0b0cc"/>
+      <rect x="77" y="237" width="6" height="8" fill="#b0b0cc" rx="1"/>
+    </g>
+    <g opacity=".35">
+      <circle cx="55" cy="232" r="5" fill="#b0b0cc"/>
+      <rect x="52" y="237" width="6" height="8" fill="#b0b0cc" rx="1"/>
+    </g>
+    <g opacity=".2">
+      <circle cx="30" cy="232" r="5" fill="#b0b0cc"/>
+      <rect x="27" y="237" width="6" height="8" fill="#b0b0cc" rx="1"/>
+    </g>
+    <!-- Approach arrows -->
+    <line x1="110" y1="237" x2="155" y2="237" stroke="rgba(245,166,35,.4)" stroke-width="1.2" marker-end="url(#arr)"/>
+    <!-- Callout: display -->
+    <line x1="272" y1="125" x2="310" y2="115" stroke="#302030" stroke-width=".6"/>
+    <text x="312" y="113" font-size="8" fill="#b0b0cc" font-family="'Helvetica Neue',Arial,sans-serif">E-ink · 500×350 mm</text>
+    <text x="312" y="123" font-size="7" fill="#484868" font-family="'Helvetica Neue',Arial,sans-serif">Always visible · zero power at rest</text>
+    <!-- Callout: LED border -->
+    <line x1="272" y1="88" x2="310" y2="78" stroke="#302030" stroke-width=".6"/>
+    <text x="312" y="76" font-size="8" fill="#f5a623" font-family="'Helvetica Neue',Arial,sans-serif">LED border · 25mm · 3,000K</text>
+    <!-- Callout: plinth -->
+    <line x1="170" y1="200" x2="135" y2="210" stroke="#302030" stroke-width=".6"/>
+    <text x="80" y="208" font-size="8" fill="#b0b0cc" font-family="'Helvetica Neue',Arial,sans-serif">Concrete plinth</text>
+    <text x="80" y="218" font-size="7" fill="#484868" font-family="'Helvetica Neue',Arial,sans-serif">500×200mm base · 900mm</text>
+    <!-- Callout: LiDAR -->
+    <line x1="226" y1="169" x2="260" y2="180" stroke="#302030" stroke-width=".6"/>
+    <text x="262" y="178" font-size="8" fill="#b0b0cc" font-family="'Helvetica Neue',Arial,sans-serif">LiDAR · 6m zone</text>
+    <!-- LoRa label -->
+    <path d="M208 75 Q190 60 175 70" fill="none" stroke="rgba(90,154,191,.4)" stroke-width="1" stroke-dasharray="4,3"/>
+    <path d="M208 75 Q220 55 235 65" fill="none" stroke="rgba(90,154,191,.4)" stroke-width="1" stroke-dasharray="4,3"/>
+    <text x="220" y="55" font-size="7.5" fill="#5a9abf" text-anchor="middle" font-family="'Helvetica Neue',Arial,sans-serif">LoRa 868MHz</text>
+    <text x="220" y="65" font-size="7" fill="#484868" text-anchor="middle" font-family="'Helvetica Neue',Arial,sans-serif">receiving from corridor nodes</text>
+    <!-- Dimension: height -->
+    <line x1="150" y1="86" x2="150" y2="238" stroke="#484868" stroke-width=".5" stroke-dasharray="3,2"/>
+    <line x1="146" y1="86" x2="154" y2="86" stroke="#484868" stroke-width=".5"/>
+    <line x1="146" y1="238" x2="154" y2="238" stroke="#484868" stroke-width=".5"/>
+    <text x="138" y="163" font-size="7" fill="#484868" text-anchor="middle" transform="rotate(-90,138,163)">900 mm</text>
+  </svg>`;
+}
+
+const SVGS = {A:svgA, B:svgB, C:svgC, D:svgD, E:svgE, F:svgF};
+
+// ── RENDER ────────────────────────────────────────────────────────────────────
+
+function renderCenter(key) {
+  const t = TYPES[key];
+  const svgFn = SVGS[key];
+  const center = document.getElementById('centerPanel');
+
+  const tlHtml = t.timeline.map(s=>`
+    <div class="tl-step">
+      <div class="tl-time">${s.t}</div>
+      <div class="tl-dot${s.active?'':' dim'}"></div>
+      <div class="tl-desc">${s.d}</div>
+    </div>`).join('');
+
+  const behHtml = t.beh.map(b=>`
+    <div class="beh-card">
+      <div class="beh-label">${b.label}</div>
+      <div class="beh-val">${b.val||b.v||'—'}</div>
+    </div>`).join('');
+
+  center.innerHTML = `
+    <div class="cp-header">
+      <div class="cp-badge">${key}</div>
+      <div class="cp-title">${t.name}</div>
+      <div class="cp-role">${t.role}</div>
+    </div>
+    <div class="schematic-wrap">
+      <div class="schematic-label">Elevation · Front view</div>
+      <div class="schematic-scale">Approx 1:14</div>
+      ${svgFn()}
+    </div>
+    <div>
+      <div class="sec-label" style="margin-bottom:10px;font-size:9px;letter-spacing:.15em;text-transform:uppercase;color:var(--text-dim)">Response Behaviour</div>
+      <div class="timeline">${tlHtml}</div>
+    </div>
+    <div>
+      <div class="sec-label" style="margin-bottom:10px;font-size:9px;letter-spacing:.15em;text-transform:uppercase;color:var(--text-dim)">Technical Summary</div>
+      <div class="behavior-grid">${behHtml}</div>
+    </div>`;
+}
+
+function renderSpecs(key) {
+  const t = TYPES[key];
+  const panel = document.getElementById('specsPanel');
+
+  const specsHtml = t.specs.map(s=>`
+    <div class="spec-row">
+      <span class="sr-key">${s.k}</span>
+      <span class="sr-val${s.amber?' a':''}">${s.v}</span>
+    </div>`).join('');
+
+  const placeHtml = t.placement.map((p,i)=>`
+    <div class="rm-seg">
+      <div class="rm-line-col">
+        ${i>0?'<div class="rm-vline" style="height:6px"></div>':''}
+        <div class="rm-dot${p.here?' here':''}"></div>
+        ${i<t.placement.length-1?'<div class="rm-vline" style="height:6px"></div>':''}
+      </div>
+      <span class="rm-seg-name">${p.s}</span>
+      <div class="rm-types"><span class="rm-type-badge${p.here?' here':''}">${p.cnt.split(',')[0].trim()}</span></div>
+    </div>`).join('');
+
+  const matsHtml = t.mats.map(m=>`
+    <div class="mat-row">
+      <div class="mat-swatch" style="background:${m.color};border:1px solid rgba(255,255,255,.1)"></div>
+      <span class="mat-name">${m.name}</span>
+      <span class="mat-note">${m.note}</span>
+    </div>`).join('');
+
+  panel.innerHTML = `
+    <div>
+      <div class="sp-label">Technical Specs</div>
+      ${specsHtml}
+    </div>
+    <div>
+      <div class="sp-label">Route Placement</div>
+      <div class="route-map">${placeHtml}</div>
+    </div>
+    <div>
+      <div class="sp-label">Materials</div>
+      <div class="mat-list">${matsHtml}</div>
+    </div>
+    <div>
+      <div class="sp-label">Context</div>
+      <div style="font-size:10px;color:var(--text-dim);font-family:'Helvetica Neue',Arial,sans-serif;line-height:1.7">${t.context}</div>
+    </div>`;
+}
+
+let current = 'A';
+function select(key) {
+  document.querySelectorAll('.tn-item').forEach(el=>el.classList.remove('active'));
+  document.getElementById('nav-'+key).classList.add('active');
+  current = key;
+  renderCenter(key);
+  renderSpecs(key);
+}
+
+select('A');
+</script>
+</body>
+</html>
